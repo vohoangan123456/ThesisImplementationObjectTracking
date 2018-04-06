@@ -4,13 +4,14 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>1f7edb5c-a6ee-4a84-a954-03bcb22e1be1</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>ThesisImplementationObjectTracking.py</StartupFile>
+    <StartupFile>my_working_space\test_surf.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>ThesisImplementationObjectTracking</Name>
     <RootNamespace>ThesisImplementationObjectTracking</RootNamespace>
+    <InterpreterId>Global|PythonCore|3.6</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +22,188 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="darkflow\cli.py" />
+    <Compile Include="darkflow\cython_utils\__init__.py" />
+    <Compile Include="darkflow\dark\connected.py" />
+    <Compile Include="darkflow\dark\convolution.py" />
+    <Compile Include="darkflow\dark\darknet.py" />
+    <Compile Include="darkflow\dark\darkop.py" />
+    <Compile Include="darkflow\dark\layer.py" />
+    <Compile Include="darkflow\dark\__init__.py" />
+    <Compile Include="darkflow\defaults.py" />
+    <Compile Include="darkflow\net\build.py" />
+    <Compile Include="darkflow\net\flow.py" />
+    <Compile Include="darkflow\net\framework.py" />
+    <Compile Include="darkflow\net\help.py" />
+    <Compile Include="darkflow\net\mnist\run.py" />
+    <Compile Include="darkflow\net\ops\baseop.py" />
+    <Compile Include="darkflow\net\ops\convolution.py" />
+    <Compile Include="darkflow\net\ops\simple.py" />
+    <Compile Include="darkflow\net\ops\__init__.py" />
+    <Compile Include="darkflow\net\vanilla\train.py" />
+    <Compile Include="darkflow\net\vanilla\__init__.py" />
+    <Compile Include="darkflow\net\yolov2\data.py" />
+    <Compile Include="darkflow\net\yolov2\predict.py" />
+    <Compile Include="darkflow\net\yolov2\train.py" />
+    <Compile Include="darkflow\net\yolov2\__init__.py" />
+    <Compile Include="darkflow\net\yolo\data.py" />
+    <Compile Include="darkflow\net\yolo\misc.py" />
+    <Compile Include="darkflow\net\yolo\predict.py" />
+    <Compile Include="darkflow\net\yolo\train.py" />
+    <Compile Include="darkflow\net\yolo\__init__.py" />
+    <Compile Include="darkflow\net\__init__.py" />
+    <Compile Include="darkflow\utils\box.py" />
+    <Compile Include="darkflow\utils\im_transform.py" />
+    <Compile Include="darkflow\utils\loader.py" />
+    <Compile Include="darkflow\utils\pascal_voc_clean_xml.py" />
+    <Compile Include="darkflow\utils\process.py" />
+    <Compile Include="darkflow\utils\__init__.py" />
+    <Compile Include="darkflow\version.py" />
+    <Compile Include="darkflow\__init__.py" />
+    <Compile Include="image_processing.py" />
+    <Compile Include="main.py" />
+    <Compile Include="my_working_space\SIFT_SURF_FAST_ORB.py" />
+    <Compile Include="my_working_space\test_surf.py" />
+    <Compile Include="setup.py" />
+    <Compile Include="test\test_darkflow.py" />
     <Compile Include="ThesisImplementationObjectTracking.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\" />
+    <Folder Include="cfg\" />
+    <Folder Include="cfg\v1.1\" />
+    <Folder Include="cfg\v1\" />
+    <Folder Include="ckpt\" />
+    <Folder Include="darkflow\" />
+    <Folder Include="darkflow\cython_utils\" />
+    <Folder Include="darkflow\cython_utils\__pycache__\" />
+    <Folder Include="darkflow\dark\" />
+    <Folder Include="darkflow\dark\__pycache__\" />
+    <Folder Include="darkflow\net\" />
+    <Folder Include="darkflow\net\mnist\" />
+    <Folder Include="darkflow\net\ops\" />
+    <Folder Include="darkflow\net\ops\__pycache__\" />
+    <Folder Include="darkflow\net\vanilla\" />
+    <Folder Include="darkflow\net\vanilla\__pycache__\" />
+    <Folder Include="darkflow\net\yolov2\" />
+    <Folder Include="darkflow\net\yolov2\__pycache__\" />
+    <Folder Include="darkflow\net\yolo\" />
+    <Folder Include="darkflow\net\yolo\__pycache__\" />
+    <Folder Include="darkflow\net\__pycache__\" />
+    <Folder Include="darkflow\utils\" />
+    <Folder Include="darkflow\utils\__pycache__\" />
+    <Folder Include="darkflow\__pycache__\" />
+    <Folder Include="my_working_space\" />
+    <Folder Include="videos\" />
+    <Folder Include="sample_img\" />
+    <Folder Include="sample_img\out\" />
+    <Folder Include="test\" />
+    <Folder Include="test\training\" />
+    <Folder Include="test\training\annotations\" />
+    <Folder Include="test\training\images\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="bin\tiny-yolo-voc.weights" />
+    <Content Include="bin\tiny-yolo.weights" />
+    <Content Include="cfg\coco.names" />
+    <Content Include="cfg\extraction.cfg" />
+    <Content Include="cfg\extraction.conv.cfg" />
+    <Content Include="cfg\tiny-yolo-1.cfg" />
+    <Content Include="cfg\tiny-yolo-4c.cfg" />
+    <Content Include="cfg\tiny-yolo-voc-1c.cfg" />
+    <Content Include="cfg\tiny-yolo-voc.cfg" />
+    <Content Include="cfg\tiny-yolo.cfg" />
+    <Content Include="cfg\v1.1\person-bottle.cfg" />
+    <Content Include="cfg\v1.1\tiny-coco.cfg" />
+    <Content Include="cfg\v1.1\tiny-yolo-4c.cfg" />
+    <Content Include="cfg\v1.1\tiny-yolov1.cfg" />
+    <Content Include="cfg\v1.1\yolo-coco.cfg" />
+    <Content Include="cfg\v1.1\yolov1.cfg" />
+    <Content Include="cfg\v1\tiny-old.profile" />
+    <Content Include="cfg\v1\tiny.profile" />
+    <Content Include="cfg\v1\yolo-2c.cfg" />
+    <Content Include="cfg\v1\yolo-4c.cfg" />
+    <Content Include="cfg\v1\yolo-full.cfg" />
+    <Content Include="cfg\v1\yolo-small.cfg" />
+    <Content Include="cfg\v1\yolo-tiny-extract.cfg" />
+    <Content Include="cfg\v1\yolo-tiny-extract_.cfg" />
+    <Content Include="cfg\v1\yolo-tiny.cfg" />
+    <Content Include="cfg\v1\yolo-tiny4c.cfg" />
+    <Content Include="cfg\yolo-voc.cfg" />
+    <Content Include="bin\yolo-voc.weights" />
+    <Content Include="cfg\yolo.cfg" />
+    <Content Include="bin\yolo.weights" />
+    <Content Include="darkflow\cython_utils\cy_yolo2_findboxes.c" />
+    <Content Include="darkflow\cython_utils\cy_yolo2_findboxes.cp36-win_amd64.pyd" />
+    <Content Include="darkflow\cython_utils\cy_yolo2_findboxes.pyx" />
+    <Content Include="darkflow\cython_utils\cy_yolo_findboxes.c" />
+    <Content Include="darkflow\cython_utils\cy_yolo_findboxes.cp36-win_amd64.pyd" />
+    <Content Include="darkflow\cython_utils\cy_yolo_findboxes.pyx" />
+    <Content Include="darkflow\cython_utils\nms.c" />
+    <Content Include="darkflow\cython_utils\nms.cp36-win_amd64.pyd" />
+    <Content Include="darkflow\cython_utils\nms.pxd" />
+    <Content Include="darkflow\cython_utils\nms.pyx" />
+    <Content Include="darkflow\cython_utils\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\dark\__pycache__\connected.cpython-36.pyc" />
+    <Content Include="darkflow\dark\__pycache__\convolution.cpython-36.pyc" />
+    <Content Include="darkflow\dark\__pycache__\darknet.cpython-36.pyc" />
+    <Content Include="darkflow\dark\__pycache__\darkop.cpython-36.pyc" />
+    <Content Include="darkflow\dark\__pycache__\layer.cpython-36.pyc" />
+    <Content Include="darkflow\dark\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\net\ops\__pycache__\baseop.cpython-36.pyc" />
+    <Content Include="darkflow\net\ops\__pycache__\convolution.cpython-36.pyc" />
+    <Content Include="darkflow\net\ops\__pycache__\simple.cpython-36.pyc" />
+    <Content Include="darkflow\net\ops\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\net\vanilla\__pycache__\train.cpython-36.pyc" />
+    <Content Include="darkflow\net\vanilla\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolov2\__pycache__\data.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolov2\__pycache__\predict.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolov2\__pycache__\train.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolov2\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolo\__pycache__\data.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolo\__pycache__\misc.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolo\__pycache__\predict.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolo\__pycache__\train.cpython-36.pyc" />
+    <Content Include="darkflow\net\yolo\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\net\__pycache__\build.cpython-36.pyc" />
+    <Content Include="darkflow\net\__pycache__\flow.cpython-36.pyc" />
+    <Content Include="darkflow\net\__pycache__\framework.cpython-36.pyc" />
+    <Content Include="darkflow\net\__pycache__\help.cpython-36.pyc" />
+    <Content Include="darkflow\net\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\utils\__pycache__\box.cpython-36.pyc" />
+    <Content Include="darkflow\utils\__pycache__\im_transform.cpython-36.pyc" />
+    <Content Include="darkflow\utils\__pycache__\loader.cpython-36.pyc" />
+    <Content Include="darkflow\utils\__pycache__\pascal_voc_clean_xml.cpython-36.pyc" />
+    <Content Include="darkflow\utils\__pycache__\process.cpython-36.pyc" />
+    <Content Include="darkflow\utils\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="darkflow\__pycache__\cli.cpython-36.pyc" />
+    <Content Include="darkflow\__pycache__\defaults.cpython-36.pyc" />
+    <Content Include="darkflow\__pycache__\version.cpython-36.pyc" />
+    <Content Include="darkflow\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="flow" />
+    <Content Include="labels.txt" />
+    <Content Include="preview.png" />
+    <Content Include="sample_img\all_object.PNG" />
+    <Content Include="sample_img\book1.jpg" />
+    <Content Include="sample_img\book2.jpg" />
+    <Content Include="sample_img\sample_computer.jpg" />
+    <Content Include="sample_img\sample_dog.jpg" />
+    <Content Include="sample_img\sample_eagle.jpg" />
+    <Content Include="sample_img\sample_giraffe.jpg" />
+    <Content Include="sample_img\sample_horses.jpg" />
+    <Content Include="sample_img\sample_office.jpg" />
+    <Content Include="sample_img\sample_person.jpg" />
+    <Content Include="sample_img\sample_scream.jpg" />
+    <Content Include="sample_img\video1_img.PNG" />
+    <Content Include="sample_img\video2_img.PNG" />
+    <Content Include="test\requirements-testing.txt" />
+    <Content Include="test\training\annotations\1.xml" />
+    <Content Include="test\training\annotations\2.xml" />
+    <Content Include="test\training\images\1.jpg" />
+    <Content Include="test\training\images\2.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|PythonCore|3.6" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
