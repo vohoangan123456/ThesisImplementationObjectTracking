@@ -33,8 +33,10 @@ def run_with_sift():
     #img2 = cv2.imread('./sample_img/all_object.png',0)          # trainImage
 
     cam = cv2.VideoCapture('./videos/videofile.mp4')
+    cam2 = cv2.VideoCapture('./videos/videofile_inroom.avi')
     while True:
         (ret, img2) = cam.read()
+        (ret, img2_2) = cam2.read()
         if cv2.waitKey(18) == ord('e'):
             bbx:BBoundingBox = crop_img_process(img2)
             img1 = img2[bbx.pY:(bbx.pY + bbx.height), bbx.pX:(bbx.pX + bbx.width), 0]
@@ -94,6 +96,7 @@ def run_with_sift():
 
         img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
         cv2.imshow('gray', img3)
+        cv2.imshow('cam2', img2_2)
 
         #update the query image
         kp1, des1 = sift.detectAndCompute(img1, None)
@@ -187,7 +190,20 @@ def find_fov():
     cv2.imshow('gray', img3)
     cv2.waitKey(0)
 
+def run_two_camera():
+    cam1 = cv2.VideoCapture('./videos/videofile_inroom.avi')
+    cam2 = cv2.VideoCapture('./videos/videofile_inroom.avi')
+    while True:
+        (ret, img1) = cam1.read()
+        (ret, img2) = cam2.read()
+
+        cv2.imshow('cam1', img1)
+        cv2.imshow('cam2', img2)
+
+        if cv2.waitKey(1) == 27:
+            break
 
 #run_with_orb();
-find_fov();
+#find_fov();
 #run_with_sift();
+run_two_camera()
