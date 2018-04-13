@@ -10,9 +10,10 @@
 
 # Import python libraries
 import cv2
-from my_working_space.kalman_filter.yolo_detector import yolo_detector
 import copy
-from my_working_space.kalman_filter.detectors import Detectors
+import os
+from random import randint
+from my_working_space.kalman_filter.yolo_detector import yolo_detector
 from my_working_space.kalman_filter.tracker import Tracker
 from darkflow.net.build import TFNet
 
@@ -20,9 +21,11 @@ def tracking_object(videopath, options):
     tfNet = TFNet(options)
     # Create opencv video capture object
     cap = cv2.VideoCapture(videopath)
-
+    # create write video
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    out = cv2.VideoWriter('./videos/outpy_{0}_{1}.avi'.format(os.path.basename(videopath), str(randint(0, 100))),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
     # Create Object Detector
-    detector = Detectors()
     yolo_detectors = yolo_detector(tfNet)
 
     # Create Object Tracker
@@ -39,7 +42,7 @@ def tracking_object(videopath, options):
     while(True):
         # Capture frame-by-frame
         ret, frame = cap.read()
-        frame = cv2.resize(frame, (600, 600))
+        #frame = cv2.resize(frame, (600, 600))
 
         # Make copy of original frame
         orig_frame = copy.copy(frame)
@@ -75,7 +78,7 @@ def tracking_object(videopath, options):
 
             # Display the resulting tracking frame
             cv2.imshow('Tracking', frame)
-
+        out.write(frame)
         # Display the original frame
         cv2.imshow('Original', orig_frame)
 
@@ -100,4 +103,5 @@ def tracking_object(videopath, options):
 
     # When everything done, release the capture
     cap.release()
+    out.release()
     cv2.destroyAllWindows()

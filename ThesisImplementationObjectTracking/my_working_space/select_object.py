@@ -71,17 +71,18 @@ class KNNAlgorithm:
         return list_knn
 
 class MyAlgorithm:
-    def __init__(self):
+    def __init__(self, threshold):
         self.current_label:int = 1
         self.list_model:list[MovingObject] = []
         self.knn_algorithm:KNNAlgorithm = KNNAlgorithm(KNN_PARAM)
+        self.threshold = threshold
 
     def add_new_object(self, moving_obj):
         self.list_model.append(moving_obj)
 
     def run_knn(self, train_model:MovingObject):
         knn_obj = self.knn_algorithm.find_k_nearest_obj(self.list_model, train_model)
-        if not knn_obj or knn_obj[1] > THRESHOLD:     #new object
+        if not knn_obj or knn_obj[1] > self.threshold:     #new object
             train_model.set_label(str(self.current_label))
             self.list_model.append(train_model)
             self.current_label += 1
@@ -144,10 +145,16 @@ class ObjectTracking:
         self.video_path = video_path
         self.options = options
         self.tfNet = TFNet(self.options)
-        self.my_process = MyAlgorithm()
+        self.my_process = MyAlgorithm(threshold)
 
     def detect_object(self):
         capture = cv2.VideoCapture(self.video_path)
+
+        #create video writer to write frame to video
+        frame_width = int(capture.get(3))
+        frame_height = int(capture.get(4))
+        out = cv2.VideoWriter('./videos/outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+
         colors = [tuple(255 * np.random.rand(3)) for i in range(5)]
         while (capture.isOpened()):
             stime = time.time()
@@ -155,7 +162,7 @@ class ObjectTracking:
             if not retval:
                 print("Cannot capture frame device | CODE TERMINATING :(")
                 exit()
-            frame = cv2.resize(frame, (600, 600))
+            #frame = cv2.resize(frame, (600, 600))
             results = self.tfNet.return_predict(frame)
             for color, result in zip(colors, results):
                 label = result['label']
@@ -170,55 +177,21 @@ class ObjectTracking:
                     self.my_process.run_knn(moving_object)
 
                     # show detector
-                    frame = cv2.rectangle(frame, tl, br, color, 2)
-                    frame = cv2.putText(frame, moving_object.label, tl, cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 2)
-            #if cv2.waitKey(18) == ord('e'):
-            #    frame = imutils.resize(frame, width=800)
-            #    points = get_points.run(frame)
-            #    if not points:
-            #        print("ERROR: No object to be tracked.")
-            #        exit()
-            #    pX = points[0][0]
-            #    pY = points[0][1]
-            #    width = abs(points[0][2] - pX)
-            #    height = abs(points[0][3] - pY)
-            
-            #    bounding_box = BoundingBox(pX, pY, width, height)
-            #    moving_object = MovingObject()
-            #    moving_object.create_object_with_boundingbox(frame, bounding_box)
-            #    cv2.imshow('moving_obj_crop', moving_object.crop_object_img)
-            #    self.my_process.run_knn(moving_object)
-
-            #    # show detector
-            #    cv2.rectangle(frame, (pX, pY), (pX + width, pY + height), (0, 255, 0), 2)
-            #    cv2.putText(frame, moving_object.label, (pX, pY), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-            #                (0, 0, 255), 1)
+                    frame = cv2.rectangle(frame, tl, br, (0, 255, 0), 2)
+                    frame = cv2.putText(frame, moving_object.label, 
+                                        tl, 
+                                        cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2)
 
             cv2.namedWindow("Image", cv2.WINDOW_NORMAL)
             cv2.imshow("Image", frame)
             print('FPS {:.1f}'.format(1 / (time.time() - stime + 0.0000000000001)))
+            out.write(frame)
             # Continue until the user presses ESC key
             if cv2.waitKey(1) == 27:
                 break
 
-#if __name__ == "__main__":
-#    source = './videos/videofile_inroom.avi'
-#    run(source, None)
-
-#frame = cv2.resize(frame, (600, 600))
-#                results = self.tfNet.return_predict(frame)
-#                for color, result in zip(colors, results):
-#                    label = result['label']
-#                    if label == 'person':
-#                        tl = (result['topleft']['x'], result['topleft']['y'])
-#                        br = (result['bottomright']['x'], result['bottomright']['y'])
-#                        bounding_box = BoundingBox(tl[0], tl[1], abs(tl[0] - br[0]), abs(tl[1] - br[1]))
-#                        moving_object = MovingObject()
-#                        moving_object.create_object_with_boundingbox(frame, bounding_box)
-#                        cv2.imshow('moving_obj_crop', moving_object.crop_object_img)
-#                        my_process.run_knn(moving_object)
-
-#                        # show detector
-#                        cv2.rectangle(frame, (pX, pY), (pX + width, pY + height), (0, 255, 0), 2)
-#                        cv2.putText(frame, moving_object.label, (pX, pY), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-#                                    (0, 0, 255), 1)
+        capture.release()
+        out.release()
+ 
+        # Closes all the frames
+        cv2.destroyAllWindows()
