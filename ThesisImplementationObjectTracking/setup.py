@@ -72,3 +72,14 @@ setup(
 	scripts = ['flow'],
     ext_modules = cythonize(ext_modules)
 )
+
+""" -----config compare with beyond compare --- .git/config.file
+[diff]
+    tool = bc4
+[difftool "bc4"]
+    cmd = \"C:\\Program Files\\Beyond Compare 4\\BComp.exe\" \"$LOCAL\" \"$REMOTE\"
+[merge]
+    tool = bc4
+[mergetool "bc4"]
+    cmd = \"C:\\Program Files\\Beyond Compare 4\\BComp.exe\" \"$REMOTE\" \"$LOCAL\" \"$BASE\" \"$MERGED\"
+"""
