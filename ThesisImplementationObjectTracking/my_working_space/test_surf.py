@@ -24,7 +24,7 @@ def crop_img_process(img):
 def run_with_sift():
     MIN_MATCH_COUNT = 5
 
-    sift = cv2.xfeatures2d.SIFT_create()
+    sift = cv2.xfeatures2d.SURF_create()
     #sift = cv2.ORB_create()
     img1 = cv2.imread('./sample_img/video1_img.png',0)          # queryImage
     #img1 = imutils.resize(img1, width=800)
@@ -32,9 +32,11 @@ def run_with_sift():
 
     #img2 = cv2.imread('./sample_img/all_object.png',0)          # trainImage
 
-    cam = cv2.VideoCapture('./videos/videofile_inroom.avi')
+    cam = cv2.VideoCapture('./videos/videofile.mp4')
+    cam2 = cv2.VideoCapture('./videos/videofile_inroom.avi')
     while True:
         (ret, img2) = cam.read()
+        (ret, img2_2) = cam2.read()
         if cv2.waitKey(18) == ord('e'):
             bbx:BBoundingBox = crop_img_process(img2)
             img1 = img2[bbx.pY:(bbx.pY + bbx.height), bbx.pX:(bbx.pX + bbx.width), 0]
@@ -60,7 +62,7 @@ def run_with_sift():
         # store all the good matches as per Lowe's ratio test.
         
         
-        img2 = cv2.rectangle(img2, (100, 100), (200, 200), (0, 255, 0), 1)
+
         if len(good) > MIN_MATCH_COUNT:
             src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
             dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
@@ -94,6 +96,7 @@ def run_with_sift():
 
         img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
         cv2.imshow('gray', img3)
+        cv2.imshow('cam2', img2_2)
 
         #update the query image
         kp1, des1 = sift.detectAndCompute(img1, None)
@@ -187,48 +190,20 @@ def find_fov():
     cv2.imshow('gray', img3)
     cv2.waitKey(0)
 
-def write_video():
-    # Create a VideoCapture object
-    cap = cv2.VideoCapture('./videos/videofile_inroom.avi')
-    # Check if camera opened successfully
-    if (cap.isOpened() == False): 
-        print("Unable to read camera feed")
- 
-    # Default resolutions of the frame are obtained.The default resolutions are system dependent.
-    # We convert the resolutions from float to integer.
-    frame_width = int(cap.get(3))
-    frame_height = int(cap.get(4))
- 
-    # Define the codec and create VideoWriter object.The output is stored in 'outpy.avi' file.
-    out = cv2.VideoWriter('./videos/outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
-    
-    save = False
-    while(True):
-        ret, frame = cap.read()
-        key = cv2.waitKey(18) & 0xFF
-        if key == ord("q"):
-            save = True
-        if ret == True:
-            if save == True:
-                out.write(frame) 
-            # Display the resulting frame    
-            cv2.imshow('frame',frame)
-            # Press Q on keyboard to stop recording
-            if cv2.waitKey(1) == 27:
-                break
- 
-        # Break the loop
-        else:
-            break 
- 
-    # When everything done, release the video capture and video write objects
-    cap.release()
-    out.release()
- 
-    # Closes all the frames
-    cv2.destroyAllWindows() 
+def run_two_camera():
+    cam1 = cv2.VideoCapture('./videos/videofile_inroom.avi')
+    cam2 = cv2.VideoCapture('./videos/videofile_inroom.avi')
+    while True:
+        (ret, img1) = cam1.read()
+        (ret, img2) = cam2.read()
+
+        cv2.imshow('cam1', img1)
+        cv2.imshow('cam2', img2)
+
+        if cv2.waitKey(1) == 27:
+            break
 
 #run_with_orb();
 #find_fov();
 #run_with_sift();
-write_video();
+run_two_camera()

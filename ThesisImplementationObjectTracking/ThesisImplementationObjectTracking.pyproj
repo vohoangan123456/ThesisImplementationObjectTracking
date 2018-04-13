@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>1f7edb5c-a6ee-4a84-a954-03bcb22e1be1</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>my_working_space\KalmanFilter.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -63,7 +63,16 @@
     <Compile Include="image_processing.py" />
     <Compile Include="main.py" />
     <Compile Include="my_working_space\get_points.py" />
-    <Compile Include="my_working_space\KalmanFilter.py">
+    <Compile Include="my_working_space\KalmanFilter.py" />
+    <Compile Include="my_working_space\kalman_filter\common.py" />
+    <Compile Include="my_working_space\kalman_filter\detectors.py" />
+    <Compile Include="my_working_space\kalman_filter\kalman_filter.py" />
+    <Compile Include="my_working_space\kalman_filter\object_tracking.py" />
+    <Compile Include="my_working_space\kalman_filter\tracker.py" />
+    <Compile Include="my_working_space\kalman_filter\yolo_detector.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_working_space\kalman_filter\__init__.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="my_working_space\Main_Functions.py" />
@@ -102,6 +111,7 @@
     <Folder Include="darkflow\utils\__pycache__\" />
     <Folder Include="darkflow\__pycache__\" />
     <Folder Include="my_working_space\" />
+    <Folder Include="my_working_space\kalman_filter\" />
     <Folder Include="NewFolder1\" />
     <Folder Include="videos\" />
     <Folder Include="sample_img\" />

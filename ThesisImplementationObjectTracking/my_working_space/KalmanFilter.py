@@ -1,4 +1,3 @@
-
 #--------------------------------------------------------------------
 # Implements Ball motion prediction using Kalman Filter
 #
@@ -10,13 +9,6 @@
 
 import cv2 as cv
 import numpy as np
-import my_working_space.get_points as get_points
-
-def get_points_process(img):
-    # Co-ordinates of objects to be tracked
-    # will be stored in a list named `points`
-    points = get_points.run(img)
-    return points
 
 # Instantiate OCV kalman filter
 class KalmanFilter:
@@ -39,7 +31,7 @@ class ProcessImage:
 
     def DetectObject(self):
 
-        vid = cv.VideoCapture('./videos/videoplayback.mp4')
+        vid = cv.VideoCapture('videoplayback.mp4')
 
         if(vid.isOpened() == False):
             print('Cannot open input video')
@@ -56,14 +48,8 @@ class ProcessImage:
             rc, frame = vid.read()
 
             if(rc == True):
-                #[ballX, ballY] = self.DetectBall(frame)
-                #predictedCoords = kfObj.Estimate(ballX, ballY)
-                [ballX, ballY] = [0,0]
-
-                if cv.waitKey(18) == ord('e'):
-                    points = get_points_process(frame)
-                    [ballX, ballY] = [points[0][0], points[0][1]]
-                    predictedCoords = kfObj.Estimate(ballX, ballY)
+                [ballX, ballY] = self.DetectBall(frame)
+                predictedCoords = kfObj.Estimate(ballX, ballY)
 
                 # Draw Actual coords from segmentation
                 cv.circle(frame, (ballX, ballY), 20, [0,0,255], 2, 8)
