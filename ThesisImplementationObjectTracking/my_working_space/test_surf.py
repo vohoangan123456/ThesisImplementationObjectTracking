@@ -203,7 +203,29 @@ def run_two_camera():
         if cv2.waitKey(1) == 27:
             break
 
+def crop_video(video_path, out_path):
+    cam1 = cv2.VideoCapture(video_path)
+    frame_width = int(cam1.get(3))
+    frame_height = int(cam1.get(4))
+    out = cv2.VideoWriter(out_path,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    save = False
+    while True:
+        (ret, img1) = cam1.read()
+        if img1 is None:
+            break
+        if cv2.waitKey(18) == ord('e'):
+            save = True
+        cv2.imshow('cam1', img1)
+        if save is True:
+            out.write(img1)
+
+        if cv2.waitKey(18) == ord('q'):
+            break
+    cam1.release()
+    out.release()
+    cv2.destroyAllWindows()
 #run_with_orb();
 #find_fov();
 #run_with_sift();
-run_two_camera()
+#run_two_camera()
+crop_video('./videos/videofile_inroom.avi', './videos/video2.avi')
