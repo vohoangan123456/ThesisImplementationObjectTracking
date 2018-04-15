@@ -259,3 +259,18 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/ThesisImplementationObjectTracking/videos/videoplayback.mp4
+/ThesisImplementationObjectTracking/videos/videofile_intown.avi
+/ThesisImplementationObjectTracking/videos/videofile_inroom.avi
+/ThesisImplementationObjectTracking/videos/videofile.mp4
+/ThesisImplementationObjectTracking/videos/outpy_videofile_intown.avi_76.avi
+/ThesisImplementationObjectTracking/videos/match5-c3.avi
+/ThesisImplementationObjectTracking/videos/match5-c2.avi
+/ThesisImplementationObjectTracking/videos/match5-c1.avi
+/ThesisImplementationObjectTracking/videos/campus4-c2.avi
+/ThesisImplementationObjectTracking/videos/campus4-c0.avi
+/ThesisImplementationObjectTracking/videos/4p-c3.avi
+/ThesisImplementationObjectTracking/videos/4p-c2.avi
+/ThesisImplementationObjectTracking/videos/4p-c1.avi
+/ThesisImplementationObjectTracking/videos/4p-c0.avi
+/ThesisImplementationObjectTracking/video.avi
