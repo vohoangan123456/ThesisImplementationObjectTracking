@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>1f7edb5c-a6ee-4a84-a954-03bcb22e1be1</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>main.py</StartupFile>
+    <StartupFile>my_working_space\test_surf.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -113,6 +113,7 @@
     <Folder Include="my_working_space\" />
     <Folder Include="my_working_space\kalman_filter\" />
     <Folder Include="NewFolder1\" />
+    <Folder Include="sample_img\cut_images\" />
     <Folder Include="videos\" />
     <Folder Include="sample_img\" />
     <Folder Include="sample_img\out\" />
@@ -207,6 +208,24 @@
     <Content Include="sample_img\book2.jpg" />
     <Content Include="sample_img\cam1.JPG" />
     <Content Include="sample_img\cam2.JPG" />
+    <Content Include="sample_img\cut_images\1_cam1.jpg" />
+    <Content Include="sample_img\cut_images\1_cam2.jpg" />
+    <Content Include="sample_img\cut_images\1_cam3.jpg" />
+    <Content Include="sample_img\cut_images\2_cam1.jpg" />
+    <Content Include="sample_img\cut_images\2_cam2.jpg" />
+    <Content Include="sample_img\cut_images\2_cam3.jpg" />
+    <Content Include="sample_img\cut_images\3_cam1.jpg" />
+    <Content Include="sample_img\cut_images\3_cam2.jpg" />
+    <Content Include="sample_img\cut_images\3_cam3.jpg" />
+    <Content Include="sample_img\cut_images\4_cam1.jpg" />
+    <Content Include="sample_img\cut_images\4_cam2.jpg" />
+    <Content Include="sample_img\cut_images\4_cam3.jpg" />
+    <Content Include="sample_img\cut_images\5_cam1.jpg" />
+    <Content Include="sample_img\cut_images\5_cam2.jpg" />
+    <Content Include="sample_img\cut_images\5_cam3.jpg" />
+    <Content Include="sample_img\cut_images\6_cam1.jpg" />
+    <Content Include="sample_img\cut_images\6_cam2.jpg" />
+    <Content Include="sample_img\cut_images\6_cam3.jpg" />
     <Content Include="sample_img\sample_computer.jpg" />
     <Content Include="sample_img\sample_dog.jpg" />
     <Content Include="sample_img\sample_eagle.jpg" />

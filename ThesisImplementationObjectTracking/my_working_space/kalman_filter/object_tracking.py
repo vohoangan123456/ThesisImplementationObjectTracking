@@ -73,8 +73,10 @@ def tracking_object(videopath, options):
                         x2 = tracker.tracks[i].trace[j+1][0][0]
                         y2 = tracker.tracks[i].trace[j+1][1][0]
                         clr = tracker.tracks[i].track_id % 9
-                        cv2.line(frame, (int(x1), int(y1)), (int(x2), int(y2)),
-                                 track_colors[clr], 2)
+                        #cv2.line(frame, (int(x1), int(y1)), (int(x2), int(y2)),
+                        #         track_colors[clr], 2)
+                        cv2.putText(frame, tracker.tracks[i].track_id, (int(x2), int(y2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        (0, 0, 255), 1)
 
             # Display the resulting tracking frame
             cv2.imshow('Tracking', frame)

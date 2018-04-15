@@ -1,5 +1,14 @@
 import cv2
 import numpy as np
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+class CommonFOV:
+    def __init__(self):
+        self.list_point = []
+        self.polygon = Polygon(self.list_point)
+
+    def check_point_inside_FOV(self, point:Point):
+        return self.polygon.contains(point)
 
 class Location:
     def __init__(self, pX, pY):
@@ -12,7 +21,24 @@ class BoundingBox:
         self.pY = pY
         self.width = width
         self.height = height
-        self.center:Location = Location(pX + width / 2, pY + height / 2)
+        self.center:Point = Point(pX + width / 2, pY + height / 2)
+
+class MovingObject:
+    def __init__(self):
+        self.bounding_box = None
+        self.image = None        
+        self.label = 0
+
+    def create_object_with_boundingbox(self, image, bounding_box:BoundingBox):
+        self.bounding_box = bounding_box
+        self.image = image[
+                            self.bounding_box.pY:self.bounding_box.pY + self.bounding_box.height,
+                            self.bounding_box.pX:self.bounding_box.pX + self.bounding_box.width
+                        ]
+        self.label = 0
+
+    def set_label(self, label:str):
+        self.label = label
 
 class yolo_detector:
     def __init__(self, tfNet):
