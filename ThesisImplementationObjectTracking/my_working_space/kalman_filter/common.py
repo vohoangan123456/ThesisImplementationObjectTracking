@@ -7,14 +7,13 @@
     Python Version    : 2.7
 '''
 
-
-def dprint(*args, **kwargs):
-    """Debug print function using inbuilt print
-    Args:
-        args   : variable number of arguments
-        kwargs : variable number of keyword argument
-    Return:
-        None.
-    """
-    # print(*args, **kwargs)
-    pass
+def convert_homography_to_polygon(homography_point):
+    width, heigh, deep = homography_point.shape
+    list_point = []
+    for x in range(0, width):
+        for y in range(0, heigh):
+            xy = []
+            for z in range(0, deep):
+                xy.append(homography_point[x][y][z])
+            list_point.append((xy[0],xy[1]))
+    return list_point

@@ -1,48 +1,32 @@
 '''
     File name         : tracker.py
     File Description  : Tracker Using Kalman Filter & Hungarian Algorithm
-    Author            : Srini Ananthakrishnan
-    Date created      : 07/14/2017
-    Date last modified: 07/16/2017
-    Python Version    : 2.7
+    Author            : An Vo Hoang
+    Date created      : 10/02/2018
+    Date last modified: 10/02/2018
+    Python Version    : 3.6
 '''
 
 # Import python libraries
 import numpy as np
 from my_working_space.kalman_filter.kalman_filter import KalmanFilter
-from my_working_space.kalman_filter.common import dprint
 from scipy.optimize import linear_sum_assignment
+from my_working_space.kalman_filter.moving_object import MovingObject
 
 
 class Track(object):
-    """Track class for every object to be tracked
-    Attributes:
-        None
-    """
-
-    def __init__(self, prediction, trackIdCount):
-        """Initialize variables used by Track class
-        Args:
-            prediction: predicted centroids of object to be tracked
-            trackIdCount: identification of each track object
-        Return:
-            None
-        """
-        self.track_id = trackIdCount  # identification of each track object
-        self.KF = KalmanFilter()  # KF instance to track this object
-        self.prediction = np.asarray(prediction)  # predicted centroids (x,y)
-        self.skipped_frames = 0  # number of frames skipped undetected
-        self.trace = []  # trace path
+    def __init__(self, trackIdCount, moving_obj):
+        self.moving_obj = moving_obj            # moving object that be tracked
+        self.moving_obj.set_label(trackIdCount)
+        self.track_id = trackIdCount            # identification of each track object
+        self.KF = KalmanFilter()                # KF instance to track this object
+        self.prediction = np.asarray(moving_obj.center)# predicted centroids (x,y)
+        self.skipped_frames = 0                 # number of frames skipped undetected
+        self.trace = []                         # trace path
 
 
 class Tracker(object):
-    """Tracker class that updates track vectors of object tracked
-    Attributes:
-        None
-    """
-
-    def __init__(self, dist_thresh, max_frames_to_skip, max_trace_length,
-                 trackIdCount):
+    def __init__(self, dist_thresh, max_frames_to_skip, max_trace_length, trackIdCount):
         """Initialize variable used by Tracker class
         Args:
             dist_thresh: distance threshold. When exceeds the threshold,
@@ -60,41 +44,30 @@ class Tracker(object):
         self.tracks = []
         self.trackIdCount = trackIdCount
 
-    def Update(self, detections):
-        """Update tracks vector using following steps:
-            - Create tracks if no tracks vector found
-            - Calculate cost using sum of square distance
-              between predicted vs detected centroids
-            - Using Hungarian Algorithm assign the correct
-              detected measurements to predicted tracks
-              https://en.wikipedia.org/wiki/Hungarian_algorithm
-            - Identify tracks with no assignment, if any
-            - If tracks are not detected for long time, remove them
-            - Now look for un_assigned detects
-            - Start new tracks
-            - Update KalmanFilter state, lastResults and tracks trace
+    def Update(self, list_moving_obj):
+        """
         Args:
-            detections: detected centroids of object to be tracked
+            list_moving_obj: detected moving objects to be tracked
         Return:
             None
         """
 
         # Create tracks if no tracks vector found
         if (len(self.tracks) == 0):
-            for i in range(len(detections)):
-                track = Track(detections[i], self.trackIdCount)
+            for i in range(len(list_moving_obj)):
+                track = Track(self.trackIdCount, list_moving_obj[i])
                 self.trackIdCount += 1
                 self.tracks.append(track)
 
         # Calculate cost using sum of square distance between
         # predicted vs detected centroids
         N = len(self.tracks)
-        M = len(detections)
+        M = len(list_moving_obj)
         cost = np.zeros(shape=(N, M))   # Cost matrix
         for i in range(len(self.tracks)):
-            for j in range(len(detections)):
+            for j in range(len(list_moving_obj)):
                 try:
-                    diff = self.tracks[i].prediction - detections[j]
+                    diff = self.tracks[i].prediction - list_moving_obj[j].center
                     distance = np.sqrt(diff[0][0]*diff[0][0] +
                                        diff[1][0]*diff[1][0])
                     cost[i][j] = distance
@@ -103,8 +76,7 @@ class Tracker(object):
 
         # Let's average the squared ERROR
         cost = (0.5) * cost
-        # Using Hungarian Algorithm assign the correct detected measurements
-        # to predicted tracks
+        # Using Hungarian Algorithm assign the correct detected measurements to predicted tracks
         assignment = []
         for _ in range(N):
             assignment.append(-1)
@@ -136,19 +108,17 @@ class Tracker(object):
                     del self.tracks[id]
                     del assignment[id]
                 else:
-                    dprint("ERROR: id is greater than length of tracks")
+                    print("ERROR: id is greater than length of tracks")
 
         # Now look for un_assigned detects
         un_assigned_detects = []
-        for i in range(len(detections)):
+        for i in range(len(list_moving_obj)):
                 if i not in assignment:
                     un_assigned_detects.append(i)
-
         # Start new tracks
         if(len(un_assigned_detects) != 0):
             for i in range(len(un_assigned_detects)):
-                track = Track(detections[un_assigned_detects[i]],
-                              self.trackIdCount)
+                track = Track(self.trackIdCount, list_moving_obj[un_assigned_detects[i]])
                 self.trackIdCount += 1
                 self.tracks.append(track)
 
@@ -158,15 +128,13 @@ class Tracker(object):
 
             if(assignment[i] != -1):
                 self.tracks[i].skipped_frames = 0
-                self.tracks[i].prediction = self.tracks[i].KF.correct(
-                                            detections[assignment[i]], 1)
+                self.tracks[i].prediction = self.tracks[i].KF.correct(list_moving_obj[assignment[i]].center, 1)
+                self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
             else:
-                self.tracks[i].prediction = self.tracks[i].KF.correct(
-                                            np.array([[0], [0]]), 0)
+                self.tracks[i].prediction = self.tracks[i].KF.correct(np.array([[0], [0]]), 0)
 
             if(len(self.tracks[i].trace) > self.max_trace_length):
-                for j in range(len(self.tracks[i].trace) -
-                               self.max_trace_length):
+                for j in range(len(self.tracks[i].trace) - self.max_trace_length):
                     del self.tracks[i].trace[j]
 
             self.tracks[i].trace.append(self.tracks[i].prediction)
