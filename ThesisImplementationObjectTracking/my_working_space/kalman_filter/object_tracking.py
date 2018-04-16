@@ -17,8 +17,11 @@ from my_working_space.kalman_filter.tracker import Tracker
 from darkflow.net.build import TFNet
 
 def tracking_object(videopath1, videopath2, options):
-    rd_number = randint(0, 100)
-    tfNet = TFNet(options)
+    rd_number = randint(0, 100) # random number for save video
+
+    # init darkflow network
+    tfNet = TFNet(options) 
+    
     # Create opencv video capture object
     cam1 = cv2.VideoCapture(videopath1)
     cam2 = cv2.VideoCapture(videopath2)
@@ -40,6 +43,8 @@ def tracking_object(videopath1, videopath2, options):
     tracker1 = Tracker(160, 10, 5, 100)
     tracker2 = Tracker(160, 10, 5, 100)
 
+    firstFrame = True   # flag check we capture the first frame
+
     # Infinite loop to process video frames
     while(True):
         # Capture frame-by-frame
@@ -49,6 +54,12 @@ def tracking_object(videopath1, videopath2, options):
         # Make copy of original frame
         orig_frame1 = copy.copy(frame1)
         orig_frame2 = copy.copy(frame2)
+
+        if firstFrame is True:
+            firstFrame = False
+            tracker1.get_FOV(orig_frame2, orig_frame1)
+            tracker2.get_FOV(orig_frame1, orig_frame2)
+
 
         # Detect and return centeroids of the objects in the frame
         yolo_detectors1.detect(frame1)
@@ -81,8 +92,15 @@ def tracking_object(videopath1, videopath2, options):
 
             # Display the resulting tracking frame
             cv2.imshow('Tracking2', frame2)
+
+        # if there is any moving object that were not assigned but exist inside the FOV, need to assign by the appropriate object in another camera
+        tracker1.Update_un_assign_detect(yolo_detectors1.list_moving_obj, tracker2)
+        tracker2.Update_un_assign_detect(yolo_detectors2.list_moving_obj, tracker1)
+
+        #save frame to video
         out1.write(frame1)
         out2.write(frame2)
+
         # Display the original frame
         cv2.imshow('Original1', orig_frame1)
         cv2.imshow('Original2', orig_frame2)

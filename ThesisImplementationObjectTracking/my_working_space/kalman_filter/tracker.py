@@ -9,9 +9,10 @@
 
 # Import python libraries
 import numpy as np
-from my_working_space.kalman_filter.kalman_filter import KalmanFilter
 from scipy.optimize import linear_sum_assignment
+from my_working_space.kalman_filter.kalman_filter import KalmanFilter
 from my_working_space.kalman_filter.moving_object import MovingObject
+from my_working_space.kalman_filter.field_of_view import CommonFOV
 
 
 class Track(object):
@@ -43,6 +44,12 @@ class Tracker(object):
         self.max_trace_length = max_trace_length
         self.tracks = []
         self.trackIdCount = trackIdCount
+        self.un_assigned_detects = []
+        self.fov = CommonFOV()
+
+    def get_FOV(self, target_cam, source_cam):
+        # init two FOV of two camera
+        self.fov.get_FOV_of_target_in_source(target_cam, source_cam)
 
     def Update(self, list_moving_obj):
         """
@@ -111,11 +118,17 @@ class Tracker(object):
                     print("ERROR: id is greater than length of tracks")
 
         # Now look for un_assigned detects
-        un_assigned_detects = []
+        self.un_assigned_detects = []
+        un_assigned_detects_out_fov = []
         for i in range(len(list_moving_obj)):
                 if i not in assignment:
-                    un_assigned_detects.append(i)
-        # Start new tracks
+                    # if the moving object is unassigned but it's inside FOV => it was assigned in the other camera
+                    if self.fov.check_moving_obj_inside_FOV(list_moving_obj[i]):
+                        self.un_assigned_detects.append(i)
+                    else:
+                        un_assigned_detects_out_fov.append(i)
+
+        # Start new tracks with the moving object that first appear in camera
         if(len(un_assigned_detects) != 0):
             for i in range(len(un_assigned_detects)):
                 track = Track(self.trackIdCount, list_moving_obj[un_assigned_detects[i]])
@@ -139,3 +152,16 @@ class Tracker(object):
 
             self.tracks[i].trace.append(self.tracks[i].prediction)
             self.tracks[i].KF.lastResult = self.tracks[i].prediction
+
+    def Update_un_assign_detect(self, list_moving_obj, another_tracker):
+        '''
+            Description:
+                assign for unassigned moving object that exist inside the FOV
+            Params:
+                list_moving_obj: list of all detected moving objects
+                another_tracker: the tracker of the other camera that is the owner of FOV
+        '''
+        for i in range(len(self.un_assigned_detects)):
+            track = Track(self.trackIdCount, list_moving_obj[self.un_assigned_detects[i]])
+            self.trackIdCount += 1
+            self.tracks.append(track)

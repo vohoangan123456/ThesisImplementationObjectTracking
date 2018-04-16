@@ -1,11 +1,6 @@
 from shapely.geometry import Point
 import numpy as np
 
-class Location:
-    def __init__(self, pX, pY):
-        self.pX = pX
-        self.pY = pY
-
 class BoundingBox:
     def __init__(self, pX, pY, width, height):
         self.pX = pX
