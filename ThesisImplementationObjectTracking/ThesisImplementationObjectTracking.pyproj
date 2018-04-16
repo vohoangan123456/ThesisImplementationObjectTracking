@@ -66,7 +66,13 @@
     <Compile Include="my_working_space\KalmanFilter.py" />
     <Compile Include="my_working_space\kalman_filter\common.py" />
     <Compile Include="my_working_space\kalman_filter\detectors.py" />
+    <Compile Include="my_working_space\kalman_filter\field_of_view.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="my_working_space\kalman_filter\kalman_filter.py" />
+    <Compile Include="my_working_space\kalman_filter\moving_object.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="my_working_space\kalman_filter\object_tracking.py" />
     <Compile Include="my_working_space\kalman_filter\tracker.py" />
     <Compile Include="my_working_space\kalman_filter\yolo_detector.py">
@@ -79,6 +85,9 @@
     <Compile Include="my_working_space\My_Utils.py" />
     <Compile Include="my_working_space\select_object.py" />
     <Compile Include="my_working_space\SIFT_SURF_FAST_ORB.py" />
+    <Compile Include="my_working_space\stuffs\abandoned_functions.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="my_working_space\test_surf.py" />
     <Compile Include="my_working_space\__init__.py" />
     <Compile Include="setup.py" />
@@ -112,7 +121,9 @@
     <Folder Include="darkflow\__pycache__\" />
     <Folder Include="my_working_space\" />
     <Folder Include="my_working_space\kalman_filter\" />
+    <Folder Include="my_working_space\stuffs\" />
     <Folder Include="NewFolder1\" />
+    <Folder Include="sample_img\cut_images\" />
     <Folder Include="videos\" />
     <Folder Include="sample_img\" />
     <Folder Include="sample_img\out\" />
@@ -207,6 +218,24 @@
     <Content Include="sample_img\book2.jpg" />
     <Content Include="sample_img\cam1.JPG" />
     <Content Include="sample_img\cam2.JPG" />
+    <Content Include="sample_img\cut_images\1_cam1.jpg" />
+    <Content Include="sample_img\cut_images\1_cam2.jpg" />
+    <Content Include="sample_img\cut_images\1_cam3.jpg" />
+    <Content Include="sample_img\cut_images\2_cam1.jpg" />
+    <Content Include="sample_img\cut_images\2_cam2.jpg" />
+    <Content Include="sample_img\cut_images\2_cam3.jpg" />
+    <Content Include="sample_img\cut_images\3_cam1.jpg" />
+    <Content Include="sample_img\cut_images\3_cam2.jpg" />
+    <Content Include="sample_img\cut_images\3_cam3.jpg" />
+    <Content Include="sample_img\cut_images\4_cam1.jpg" />
+    <Content Include="sample_img\cut_images\4_cam2.jpg" />
+    <Content Include="sample_img\cut_images\4_cam3.jpg" />
+    <Content Include="sample_img\cut_images\5_cam1.jpg" />
+    <Content Include="sample_img\cut_images\5_cam2.jpg" />
+    <Content Include="sample_img\cut_images\5_cam3.jpg" />
+    <Content Include="sample_img\cut_images\6_cam1.jpg" />
+    <Content Include="sample_img\cut_images\6_cam2.jpg" />
+    <Content Include="sample_img\cut_images\6_cam3.jpg" />
     <Content Include="sample_img\sample_computer.jpg" />
     <Content Include="sample_img\sample_dog.jpg" />
     <Content Include="sample_img\sample_eagle.jpg" />
