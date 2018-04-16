@@ -1,23 +1,19 @@
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from my_working_space.kalman_filter.common import convert_homography_to_polygon
+from my_working_space.kalman_filter.moving_object import MovingObject
 import numpy as np
 
 class CommonFOV:
-    def __init__(self, source_cam_id, target_cam_id):
+    def __init__(self):
         '''
             Description:
-                create a FOV polygon of target_cam_id inside source_cam_id
-            Params:
-                source_cam_id: the definition of source camera
-                target_cam_id: the definition of target camera
+                create a FOV polygon of a camera inside another camera
         '''
         self.list_point = []
         self.polygon = None
-        self.source_cam_id = source_cam_id
-        self.target_cam_id = target_cam_id
 
-    def check_point_inside_FOV(self, point:Point):
+    def check_point_inside_FOV(self, point):
         '''
             Description:
                 check the point inside or outside of fov
@@ -28,15 +24,34 @@ class CommonFOV:
         '''
         if self.polygon is None:
             return False
-        return self.polygon.contains(point)
+        return self.polygon.contains(Point(point[0],point[1]))
 
-    def get_FOV_of_cam1_in_cam2(self, source_cam, target_cam):
+    def check_moving_obj_inside_FOV(self, moving_obj:MovingObject):
+        '''
+            Description: 
+                check a moving object is inside a FOV or not
+            Params:
+                moving_obj: detected moving object
+            Returns:
+                inside or not
+        '''
+
+        # get top_left, bottom_left, bottom_right, top_right vertex of a bouding box
+        top_left = Point(moving_obj.bounding_box.pX, moving_obj.bounding_box.pY)
+        bottom_left = Point(moving_obj.bounding_box.pX, moving_obj.bounding_box.pY + moving_obj.bounding_box.height)
+        bottom_right = Point(moving_obj.bounding_box.pX + moving_obj.bounding_box.width, moving_obj.bounding_box.pY + moving_obj.bounding_box.height)
+        top_right = Point(moving_obj.bounding_box.pX + moving_obj.bounding_box.width, moving_obj.bounding_box.pY)   
+        
+        # return true if any of vertex is inside FOV
+        return self.polygon.contains(top_left) or self.polygon.contains(bottom_left) or self.polygon.contains(bottom_right) or self.polygon.contains(top_right);
+
+    def get_FOV_of_target_in_source(self, target_cam, source_cam):
         '''
             Description:
                 find the FOV of the target_cam in source_cam
             Params:
-                cam1: background image of camera 1
-                cam2: background image of camera 2
+                target_cam: background image of camera target
+                source_cam: background image of camera source
             return: 
                 None
         '''
