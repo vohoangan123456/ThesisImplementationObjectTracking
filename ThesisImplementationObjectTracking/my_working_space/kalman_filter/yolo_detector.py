@@ -11,6 +11,7 @@ class yolo_detector:
         self.list_moving_obj = []
         for result in results:
             label = result['label']
+            confidence = result['confidence']
             if label == 'person':
                 tl = (result['topleft']['x'], result['topleft']['y'])
                 br = (result['bottomright']['x'], result['bottomright']['y'])                

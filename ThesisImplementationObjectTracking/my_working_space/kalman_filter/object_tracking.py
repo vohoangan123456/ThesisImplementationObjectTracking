@@ -46,6 +46,9 @@ def tracking_object(videopath1, videopath2, options):
         ret1, frame1 = cam1.read()
         ret2, frame2 = cam2.read()
 
+        if frame1 is None or frame2 is None:
+            break
+
         # Make copy of original frame
         orig_frame1 = copy.copy(frame1)
         orig_frame2 = copy.copy(frame2)
