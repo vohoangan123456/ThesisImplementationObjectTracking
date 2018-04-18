@@ -1,60 +1,91 @@
 from shapely.geometry import Point
 import numpy as np
+from sys import maxsize
+from math import pow
 LIST_FEATURE_EXTRACTION = ['momentColor', 'huInvariance', 'colorHistogram', 'sift', 'surf']
-WEIGHTS = [1, 2, 2]
+WEIGHTS = [1, 2, 2, 3] # weight of the features that use for compute different between two object
 class FeatureExtractor:
     def __init__(self, image):
         self.image = image
         self.gray_image = utils.to_gray(self.image)
         return
 
-    def extract_moment_color(self):
-        mean, variance = cv2.meanStdDev(self.image)
-        skewness = variance ** (2 / 3)
-        momentColor = [
-            mean, variance, skewness
-        ]
-        return momentColor
-
     def extract_hu_moment(self):
+        '''
+            Description:
+                extract hu invariant moments
+            Return:
+                Hu sevent invariant moment vector
+        '''
         return cv2.HuMoments(cv2.moments(self.gray_image)).flatten()
 
     def extract_color_histogram(self):
+        '''
+            Description:
+                extract color histogram
+            Return:
+                color histogram
+        '''
         hist = cv2.calcHist([self.image], [0, 1, 2], None, [8, 8, 8],
                             [0, 256, 0, 256, 0, 256])
         hist = cv2.normalize(hist, hist).flatten()
         return hist
 
     def extract_sift_features(self):
+        '''
+            Description:
+                extract sift
+            Return:
+                sift keypoint and sift descriptor
+        '''
         sift = cv2.xfeatures2d.SIFT_create()
         kp, desc = sift.detectAndCompute(self.gray_image, None)
-        return kp, desc #keypoints and descriptors
-
-    def extract_surf_features(self):
-        surf = cv2.xfeatures2d.SURF_create()
-        kp, desc = surf.detectAndCompute(self.gray_image, None)
-        return kp, desc #keypoints and descriptors
+        return kp, desc
 
 class FeatureMatching:
     def __init__(self):
-        self.bf_matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+        FLANN_INDEX_KDTREE = 0
+        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+        search_params = dict(checks = 50)
+        self.flann = cv2.FlannBasedMatcher(index_params, search_params)
 
     def compute_diff(self, desc1, desc2):
+        '''
+            Description:
+                compute the different of two sift descriptor
+            Params:
+                desc1: description 1
+                desc2: description 2
+            Returns:
+                the number of matching points
+        '''
         if desc1 == None or desc2 == None:
             return 0
-        matches = self.bf_matcher.match(desc1, desc2)
-        #return_value = sum(c.distance for c in matches) / (len(matches) + 0.00000000000001)
-        return len(matches)
+        
+        matches = self.flann.knnMatch(desc1,desc2, k=2)
+        good = []
+        for m,n in matches:
+            if m.distance < 0.7*n.distance:
+                good.append(m)
+        return len(good)
 
-    # obj1: MovingObject
-    # obj2: MovingObject
     def compare_object(self, obj1: MovingObject, obj2: MovingObject, feature_label:str):
+        '''
+            Description:
+                compare two object with the specific feature
+            Params:
+                obj1: moving object 1
+                obj2: moving object 2
+                feature_label: the name of the feature that need to be extracted
+            Returns:
+                the different between two moving object based on the given feature label
+        '''
         diff_value = 0
-        if feature_label == LIST_FEATURE_EXTRACTION[1]: #hu invariant
+        if feature_label == LIST_FEATURE_EXTRACTION[1]:     # hu invariant
             diff_value = abs(np.array(obj1.hu_moment_feature) - np.array(obj2.hu_moment_feature))
-        elif feature_label == LIST_FEATURE_EXTRACTION[2]:   #color histogram
+        elif feature_label == LIST_FEATURE_EXTRACTION[2]:   # color histogram
             diff_value = cv2.compareHist(obj1.color_histogram_feature, obj2.color_histogram_feature, cv2.HISTCMP_INTERSECT)
-        elif feature_label == LIST_FEATURE_EXTRACTION[3]:   #sift
+        elif feature_label == LIST_FEATURE_EXTRACTION[3]:   # sift
             diff_value = self.compute_diff(obj1.surf_feature['Descriptor'], obj2.surf_feature['Descriptor'])
         return diff_value
 
@@ -82,18 +113,49 @@ class MovingObject:
         self.vector = None      # vector from moving object to the nearest point in FOV
 
     def set_label(self, label:str):
+        '''
+            Description:
+                set label for moving object
+            Params:
+                label: label that need to set for object
+        '''
         self.label = label
 
+    def set_vector(self, nearest_point):
+        '''
+            Description:
+                set the vector from the moving object to the nearest point in the boundary of fov
+            Params:
+                nearest_point: the nearest point to moving object
+        '''
+        self.vector = (self.bounding_box.center.x - nearest_point.x, self.bounding_box.center.y - nearest_point.y)
+
     def get_feature(self):
+        '''
+            Description:
+                extract feature color histogram, hu invariants, sift of moving object
+        '''
         feature_extractor = FeatureExtractor(self.image)
         self.CH_feature = feature_extractor.extract_color_histogram()
         self.HU_feature = feature_extractor.extract_hu_moment()
         self.SI_feature = feature_extractor.extract_sift_features()
 
     def compare_other(self, other_moving_obj):
+        '''
+            Description:
+                compare this moving object with another moving object
+            Params:
+                other_moiving_obj: the other moving object that need to compute the different
+            Returns:
+                return the different between two moving object
+
+        '''
         feature_matching = FeatureMatching()
         HU_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[1])
         CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
         SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
-        return HU_diff * WEIGHTS[0] + CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2]
+        vector_diff = maxsize
+        if self.vector is not None and other_moving_obj.vector is not None:
+            vector_diff = pow(self.vector[0] - other_moving_obj.vector[0], 2) + pow(self.vector[1] - other_moving_obj.vector[1], 2)
+        return HU_diff * WEIGHTS[0] + CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2] + vector_diff * WEIGHTS[3]
 
