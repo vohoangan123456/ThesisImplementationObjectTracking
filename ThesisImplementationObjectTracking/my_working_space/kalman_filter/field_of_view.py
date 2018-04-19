@@ -102,7 +102,7 @@ class CommonFOV:
         # get the intersection between the fov and the camera
         self.polygon = self.polygon.intersection(cam_polygon)
 
-    def get_nearest_distance_from_given_point(self, point:Point):
+    def get_nearest_point_from_given_point(self, point:Point):
         '''
             Description: 
                 get the nearest distance in the boundary of polygon from the given point
@@ -112,5 +112,5 @@ class CommonFOV:
                 the distance that closest with the given point
         '''
         nearest_distance = self.polygon.exterior.project(point)
-        #nearest_point = self.polygon.exterior.interpolate(nearest_distance)
-        return nearest_distance
+        nearest_point = self.polygon.exterior.interpolate(nearest_distance)
+        return nearest_point
