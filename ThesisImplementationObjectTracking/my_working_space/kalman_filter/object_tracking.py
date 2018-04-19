@@ -26,13 +26,14 @@ def tracking_object(videopath1, videopath2, options):
     cam1 = cv2.VideoCapture(videopath1)
     cam2 = cv2.VideoCapture(videopath2)
 
+    frame_width, frame_height = 600,600
     # create write video
-    frame_width = int(cam1.get(3))
-    frame_height = int(cam1.get(4))
+    #frame_width = int(cam1.get(3))
+    #frame_height = int(cam1.get(4))
     out1 = cv2.VideoWriter('./videos/outpy_{0}_{1}.avi'.format(str(rd_number), os.path.basename(videopath1)),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
 
-    frame_width = int(cam2.get(3))
-    frame_height = int(cam2.get(4))
+    #frame_width = int(cam2.get(3))
+    #frame_height = int(cam2.get(4))
     out2 = cv2.VideoWriter('./videos/outpy_{0}_{1}.avi'.format(str(rd_number), os.path.basename(videopath2)),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
 
     # Create Object Detector
@@ -40,8 +41,8 @@ def tracking_object(videopath1, videopath2, options):
     yolo_detectors2 = yolo_detector(tfNet)
 
     # Create Object Tracker
-    tracker1 = Tracker(160, 10, 5, 100)
-    tracker2 = Tracker(160, 10, 5, 100)
+    tracker1 = Tracker(160, 1, 5, 100)
+    tracker2 = Tracker(160, 1, 5, 300)
 
     firstFrame = True   # flag check we capture the first frame
 
@@ -50,7 +51,8 @@ def tracking_object(videopath1, videopath2, options):
         # Capture frame-by-frame
         ret1, frame1 = cam1.read()
         ret2, frame2 = cam2.read()
-
+        frame1 = cv2.resize(frame1, (600,600))
+        frame2 = cv2.resize(frame2, (600,600))
         if frame1 is None or frame2 is None:
             break
 
@@ -61,8 +63,7 @@ def tracking_object(videopath1, videopath2, options):
         if firstFrame is True:
             firstFrame = False
             tracker1.get_FOV(orig_frame2, orig_frame1)
-            tracker2.get_FOV(orig_frame1, orig_frame2)
-
+            tracker2.get_FOV(orig_frame1, orig_frame2)        
 
         # Detect and return centeroids of the objects in the frame
         yolo_detectors1.detect(frame1)
@@ -80,7 +81,7 @@ def tracking_object(videopath1, videopath2, options):
                 if (len(tracker1.tracks[i].trace) > 1):
                     pX = tracker1.tracks[i].trace[-1][0][0]
                     pY = tracker1.tracks[i].trace[-1][1][0]
-                    cv2.putText(frame1, str(tracker1.tracks[i].track_id - 99), (int(pX), int(pY)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                    cv2.putText(frame1, str(tracker1.tracks[i].track_id - 100), (int(pX), int(pY)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
             # Display the resulting tracking frame
             cv2.imshow('Tracking1', frame1)
@@ -91,7 +92,7 @@ def tracking_object(videopath1, videopath2, options):
                 if (len(tracker2.tracks[i].trace) > 1):
                     pX = tracker2.tracks[i].trace[-1][0][0]
                     pY = tracker2.tracks[i].trace[-1][1][0]
-                    cv2.putText(frame2, str(tracker2.tracks[i].track_id - 99), (int(pX), int(pY)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                    cv2.putText(frame2, str(tracker2.tracks[i].track_id - 100), (int(pX), int(pY)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
             # Display the resulting tracking frame
             cv2.imshow('Tracking2', frame2)
@@ -99,6 +100,10 @@ def tracking_object(videopath1, videopath2, options):
         # if there is any moving object that were not assigned but exist inside the FOV, need to assign by the appropriate object in another camera
         tracker1.Update_un_assign_detect(yolo_detectors1.list_moving_obj, tracker2)
         tracker2.Update_un_assign_detect(yolo_detectors2.list_moving_obj, tracker1)
+
+        # draw fov
+        tracker1.fov.draw_polygon(frame1)
+        tracker2.fov.draw_polygon(frame2)
 
         #save frame to video
         out1.write(frame1)

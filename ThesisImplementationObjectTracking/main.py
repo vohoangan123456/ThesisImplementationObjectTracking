@@ -8,7 +8,7 @@ options = {
 }
 
 threshold = 20
-video_path1 = './videos/video.avi'
-video_path2 = './videos/video2.avi'
+video_path1 = './videos/devide_video1.avi'
+video_path2 = './videos/devide_video2.avi'
 
 obj_tracker.tracking_object(video_path1, video_path2, options)

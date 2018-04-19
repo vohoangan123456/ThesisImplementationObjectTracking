@@ -9,11 +9,13 @@
 
 # Import python libraries
 import numpy as np
+import sys
 from scipy.optimize import linear_sum_assignment
 from my_working_space.kalman_filter.kalman_filter import KalmanFilter
 from my_working_space.kalman_filter.moving_object import MovingObject
 from my_working_space.kalman_filter.field_of_view import CommonFOV
 
+THRESHOLD = 160
 
 class Track(object):
     def __init__(self, trackIdCount, moving_obj):
@@ -49,7 +51,7 @@ class Tracker(object):
 
     def get_FOV(self, target_cam, source_cam):
         # init two FOV of two camera
-        self.fov.get_FOV_of_target_in_source(target_cam, source_cam)
+        self.fov.get_FOV_of_target_in_source(target_cam, source_cam)        
 
     def Update(self, list_moving_obj):
         """
@@ -129,9 +131,9 @@ class Tracker(object):
                         un_assigned_detects_out_fov.append(i)
 
         # Start new tracks with the moving object that first appear in camera
-        if(len(un_assigned_detects) != 0):
-            for i in range(len(un_assigned_detects)):
-                track = Track(self.trackIdCount, list_moving_obj[un_assigned_detects[i]])
+        if(len(un_assigned_detects_out_fov) != 0):
+            for i in range(len(un_assigned_detects_out_fov)):
+                track = Track(self.trackIdCount, list_moving_obj[un_assigned_detects_out_fov[i]])
                 self.trackIdCount += 1
                 self.tracks.append(track)
 
@@ -142,6 +144,7 @@ class Tracker(object):
             if(assignment[i] != -1):
                 self.tracks[i].skipped_frames = 0
                 self.tracks[i].prediction = self.tracks[i].KF.correct(list_moving_obj[assignment[i]].center, 1)
+                list_moving_obj[assignment[i]].set_label(self.tracks[i].track_id)
                 self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
             else:
                 self.tracks[i].prediction = self.tracks[i].KF.correct(np.array([[0], [0]]), 0)
@@ -153,6 +156,19 @@ class Tracker(object):
             self.tracks[i].trace.append(self.tracks[i].prediction)
             self.tracks[i].KF.lastResult = self.tracks[i].prediction
 
+    def get_position_in_fov(self, moving_obj:MovingObject):
+        '''
+            Description:
+                get the distance from moving object to the edge of fov
+            Params:
+                moving_obj: moving object
+            Returns:
+                the nearest distance
+        '''
+        nearest_point = self.fov.get_nearest_distance_from_given_point(moving_obj.bounding_box.center)
+        #vector = (int(moving_obj.bounding_box.center.x - nearest_point.x), int(moving_obj.bounding_box.center.y - nearest_point.y))
+        return nearest_point
+
     def Update_un_assign_detect(self, list_moving_obj, another_tracker):
         '''
             Description:
@@ -162,6 +178,27 @@ class Tracker(object):
                 another_tracker: the tracker of the other camera that is the owner of FOV
         '''
         for i in range(len(self.un_assigned_detects)):
-            track = Track(self.trackIdCount, list_moving_obj[self.un_assigned_detects[i]])
-            self.trackIdCount += 1
-            self.tracks.append(track)
+            # get the vector of unassigned moving object in this camera
+            distance = self.get_position_in_fov(list_moving_obj[self.un_assigned_detects[i]])
+
+            # find the closest vector of other assigned moving object in other camera
+            min_dist = sys.maxsize
+            moving_o = None
+            for object in another_tracker.tracks:
+                # check if the traversed moving object is inside the fov
+                if another_tracker.fov.check_moving_obj_inside_FOV(object.moving_obj):
+                    # compute the vector of the traversed moving object in fov
+                    dist = another_tracker.get_position_in_fov(object.moving_obj)
+                    dist = abs(dist - distance)
+                    if dist < min_dist and dist < THRESHOLD:
+                        min_dist = dist
+                        moving_o = object.moving_obj
+
+            # in the case that there are no object in another camera move to this camera
+            if moving_o is None:
+                track = Track(self.trackIdCount, list_moving_obj[self.un_assigned_detects[i]])
+                self.trackIdCount += 1
+                self.tracks.append(track)
+            else:
+                track = Track(moving_o.label, list_moving_obj[self.un_assigned_detects[i]])
+                self.tracks.append(track)
