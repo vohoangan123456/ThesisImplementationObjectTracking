@@ -5,6 +5,8 @@ import imutils
 import my_working_space.get_points as get_points
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+from shapely.geometry import LineString
+from itertools import product
 
 class Utils:
     def convert_homography_to_polygon(self, homography_point):
@@ -26,6 +28,9 @@ class CommonFOV:
 
     def check_point_inside_FOV(self, point:Point):
         return self.polygon.contains(point)
+
+    def get_distance_to_edge(self, point:Point):
+        return self.polygon.exterior.distance(point)
 
 class BoundingBox:
     def __init__(self, pX, pY, width, height):
@@ -122,12 +127,37 @@ def find_fov():
     img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
     cv2.imshow('gray', img3)
     cv2.waitKey(0)
+
+def draw_point(fov, img):
+    points = get_points_process(img)
+    if not points:
+        print("ERROR: No object to be tracked.")
+        exit()
+    pX = points[0][0]
+    pY = points[0][1]
+
+    nearest = fov.polygon.exterior.project(Point(pX, pY))
+    point_near = fov.polygon.exterior.interpolate(nearest)
+    vector = (int(point_near.x - pX), int(point_near.y - pY))
+    print(point_near, point_near.x, point_near.y)
+    print('distance: ',fov.get_distance_to_edge(Point(pX, pY)))
+    print('Vector: ', str(vector[0]) +'x +' + str(vector[1]) + 'y = 0')
+    cv2.line(img, (int(pX), int(pY)), (int(point_near.x), int(point_near.y)), (0, 255, 0), 2)
+    return vector
+
+
+def draw_polygon(polygon:Polygon, img):
+    boundary = polygon.boundary.xy
+    for index in range(0, len(boundary[0])-1):
+        cv2.line(img, (int(boundary[0][index]),int(boundary[1][index])), 
+                    (int(boundary[0][index + 1]), int(boundary[1][index + 1])), (0, 0, 0), 6)
 def fov_handle():
+    from shapely import wkt
     utils = Utils()
     file_path = './sample_img/'
-    img1 = cv2.imread(file_path + 'cam1.jpg', 0)
+    img1 = cv2.imread(file_path + 'cam1_intown.jpg', 0)
     img1 = imutils.resize(img1, width=500)
-    img2 = cv2.imread(file_path + 'cam2.jpg', 0)
+    img2 = cv2.imread(file_path + 'cam2_intown.jpg', 0)
     img2 = imutils.resize(img2, width=500)
 
     #img1 = crop_img_process(img1)
@@ -135,10 +165,13 @@ def fov_handle():
 
     kp1, des1 = sift.detectAndCompute(img1,None)
     kp2, des2 = sift.detectAndCompute(img2,None)
+
     FLANN_INDEX_KDTREE = 0
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
     search_params = dict(checks = 50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+    # create FOV img1 in img2
     matches = flann.knnMatch(des1,des2,k=2)
     good = []
     for m,n in matches:
@@ -156,20 +189,45 @@ def fov_handle():
         dst = cv2.perspectiveTransform(pts,M)
         list_point = utils.convert_homography_to_polygon(np.int32(dst))
         fov = CommonFOV(list_point)
-        img2 = cv2.polylines(img2, [np.int32(dst)], True, (255, 255, 255), 2, cv2.LINE_AA)
+        #img2 = cv2.polylines(img2, [np.int32(dst)], True, (255, 255, 255), 2, cv2.LINE_AA)
+
+        cam1_polygon = Polygon([(0,0),(0, h), (w, h), (w, 0)])
         cv2.waitKey(0)
+
+    # create FOV img2 in img1
+    matches1 = flann.knnMatch(des2,des1,k=2)
+    good1 = []
+    for m,n in matches1:
+        if m.distance < 0.7*n.distance:
+            good1.append(m)
+    if len(good1) > 10:
+        src_pts1 = np.float32([ kp2[m.queryIdx].pt for m in good1 ]).reshape(-1,1,2)
+        dst_pts1 = np.float32([ kp1[m.trainIdx].pt for m in good1 ]).reshape(-1,1,2)
+
+        M, mask = cv2.findHomography(src_pts1, dst_pts1, cv2.RANSAC,5.0)
+        matchesMask = mask.ravel().tolist()
+
+        h,w = img2.shape
+        pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+        dst = cv2.perspectiveTransform(pts,M)
+        list_point = utils.convert_homography_to_polygon(np.int32(dst))
+        fov1 = CommonFOV(list_point)
+        #img1 = cv2.polylines(img1, [np.int32(dst)], True, (255, 255, 255), 2, cv2.LINE_AA)
+
+        cam2_polygon = Polygon([(0,0),(0, h), (w, h), (w, 0)])
+        fov.polygon = fov.polygon.intersection(cam2_polygon)
+        draw_polygon(fov.polygon, img2)
+
+        #fov1.polygon = fov1.polygon.intersection(cam2_polygon)
+        draw_polygon(fov1.polygon, img1)
+
+        cv2.waitKey(0)        
     while True:
         cv2.imshow('img2',img2)
-        points = get_points_process(img2)
-        if not points:
-            print("ERROR: No object to be tracked.")
-            exit()
-        pX = points[0][0]
-        pY = points[0][1]
-        if fov.check_point_inside_FOV(Point(pX, pY)):
-            print('inside')
-        else:
-            print('outside')
+        cv2.imshow('img1',img1)
+        if cv2.waitKey(18) == ord('e'):
+            draw_point(fov, img2)
+            draw_point(fov1, img1)
         
 def run_two_camera():
     cam1 = cv2.VideoCapture('./videos/4p-c0.avi')
@@ -206,7 +264,7 @@ def run_two_camera():
 
 def crop_video(video_path, out_path):
     cam1 = cv2.VideoCapture(video_path)
-    frame_width = int(cam1.get(3))
+    frame_width = int(cam1.get(3) * 2 / 3) 
     frame_height = int(cam1.get(4))
     out = cv2.VideoWriter(out_path,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
     save = False
@@ -225,10 +283,149 @@ def crop_video(video_path, out_path):
     cam1.release()
     out.release()
     cv2.destroyAllWindows()
+def devide_video(video_path, out_path1, out_path2):
+    cam1 = cv2.VideoCapture(video_path)
+    one_part = int(cam1.get(3) / 3)
+    frame_width = one_part * 2 
+    frame_height = int(cam1.get(4))
+    out1 = cv2.VideoWriter(out_path1,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    out2 = cv2.VideoWriter(out_path2,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    save = False
+    while True:
+        (ret, img1) = cam1.read()
+        output_img1 = img1[
+                            0:frame_height,
+                            0:frame_width
+                        ]
+        output_img2 = img1[
+                            0:frame_height,
+                            one_part: one_part + frame_width
+                        ]
+        
+        if img1 is None:
+            break
+        if cv2.waitKey(18) == ord('e'):
+            save = True
+        cv2.imshow('cam1', output_img1)
+        cv2.imshow('cam2', output_img2)
+        if save is True:
+            out1.write(output_img1)
+            out2.write(output_img2)
 
+        if cv2.waitKey(18) == ord('q'):
+            break
+    cam1.release()
+    out1.release()
+    out2.release()
+    cv2.destroyAllWindows()
+
+def play_multiple_video(video_path1, video_path2):
+    cam1 = cv2.VideoCapture(video_path1)
+    cam2 = cv2.VideoCapture(video_path2)
+    time = 18
+    pause = False
+    while True:
+        (ret, img1) = cam1.read()
+        (ret, img2) = cam2.read()
+        img1 = cv2.resize(img1, (600,600))
+        img2 = cv2.resize(img2, (600,600))
+
+        cv2.imshow('cam1', img1)
+        cv2.imshow('cam2', img2)
+        key = cv2.waitKey(time)
+        if key == ord('r'):
+            time -= 2
+        elif key == ord('e'):
+            time += 2
+        if key == ord('p'):
+            pause = not pause
+        while pause:
+            key1 = cv2.waitKey(time)
+            if key1 == ord('p'):
+                pause = not pause
+
+        if key == 27:
+            break
+
+def merge_two_video(video_path1, video_path2):
+    import imageio
+    imageio.plugins.ffmpeg.download()
+    from moviepy.editor import VideoFileClip, clips_array
+    clip1 = VideoFileClip(video_path1)
+    clip2 = VideoFileClip(video_path2)
+    #final_clip = concatenate_videoclips([clip1,clip2])
+    #final_clip.write_videofile('./videos/merge_video.mp4')
+    final_clip = clips_array([[clip1, clip2]])
+    final_clip.resize(width=1200).write_videofile("./videos/merge_file_width.mp4")
+    print('done')
+
+    #rd_number = randint(0, 100) # random number for save video
+    #cam1 = cv2.VideoCapture(video_path1)
+    #cam2 = cv2.VideoCapture(video_path2)
+    #frame_width = int(cam1.get(3)) + int(cam2.get(3))
+    #frame_height = int(cam1.get(4))
+    #out1 = cv2.VideoWriter('./videos/merge_{0}'.format(str(rd_number)),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    #while True:
+    #    (ret, img1) = cam1.read()
+    #    (ret, img2) = cam2.read()
+    #    img1 = cv2.resize(img1, (600,600))
+    #    img2 = cv2.resize(img2, (600,600))
+    #    # merge two images
+    #    result = Image.new("RGB", (1200, 600))
+    #    files = [img1, img2]
+    #    for index, img in enumerate(files):
+    #        path = os.path.expanduser('./sample_img/cam1.jpg')
+    #        img = Image.open(path)
+    #        img.thumbnail((400, 400), Image.ANTIALIAS)
+    #        x = index // 2 * 400
+    #        y = index % 2 * 400
+    #        w, h = img.size
+    #        result.paste(img, (x, y, x + w, y + h))
+    #    #total_width = 1200
+    #    #max_height = 600
+    #    #new_im = Image.new('RGB', (total_width, max_height))
+    #    #new_im.paste(img1,(0,0,600,600))
+    #    #new_im.paste(img1, (0, 0, 600, 600))
+    #    #new_im.paste(img2, (600,0, 1200, 600))
+    #    # end merge
+
+    #    cv2.imshow('cam1', img1)
+    #    cv2.imshow('cam2', img2)
+    #    cv2.imshow('merge', new_im)
+    #    out1.write(new_im)
+    #    key = cv2.waitKey(time)
+
+    #    if key == 27:
+    #        break
+    #cam1.release()
+    #cam2.release()
+    #out1.release()
+    #cv2.destroyAllWindows()
+
+def stable(rankings, A, B):
+    partners = dict((a, (rankings[(a, 1)], 1)) for a in A)
+    is_stable = False # whether the current pairing (given by `partners`) is stable
+    while is_stable == False:
+        is_stable = True
+        for b in B:
+            is_paired = False # whether b has a pair which b ranks <= to n
+            for n in range(1, len(B) + 1):
+                a = rankings[(b, n)]
+                a_partner, a_n = partners[a]
+                if a_partner == b:
+                    if is_paired:
+                        is_stable = False
+                        partners[a] = (rankings[(a, a_n + 1)], a_n + 1)
+                    else:
+                        is_paired = True
+    return sorted((a, b) for (a, (b, n)) in partners.items())
 #run_with_orb();
 #find_fov();
-fov_handle();
+#fov_handle();
+#draw_polygon();
 #run_with_sift();
 #run_two_camera()
-#crop_video('./videos/videofile_inroom.avi', './videos/video2.avi')
+#crop_video('./videos/videofile_intown.avi', './videos/video2.avi')
+#devide_video('./videos/videofile_intown.avi', './videos/devide_video1.avi', './videos/devide_video2.avi')
+#play_multiple_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')
+merge_two_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')
