@@ -20,6 +20,8 @@ class yolo_detector:
                 moving_obj.get_feature()
                 self.list_moving_obj.append(moving_obj);
                 cv2.rectangle(frame, tl, br, (0, 255, 0), 2)
-                cv2.putText(frame, str(len(self.list_moving_obj)-1), tl, cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 255), 1)
-                cv2.putText(frame, str('({0},{1})'.format(tl[0], tl[1])), br, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                # cv2.putText(frame, str(len(self.list_moving_obj)-1), tl, cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 255), 1)
+                # cv2.putText(frame, str('({0},{1})'.format(tl[0], tl[1])), br, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+        # Slower the FPS
+        cv2.waitKey(50)
                 

@@ -347,32 +347,62 @@ def play_multiple_video(video_path1, video_path2):
         if key == 27:
             break
 
+def merge_two_video(video_path1, video_path2):
+    import imageio
+    imageio.plugins.ffmpeg.download()
+    from moviepy.editor import VideoFileClip, clips_array
+    clip1 = VideoFileClip(video_path1)
+    clip2 = VideoFileClip(video_path2)
+    #final_clip = concatenate_videoclips([clip1,clip2])
+    #final_clip.write_videofile('./videos/merge_video.mp4')
+    final_clip = clips_array([[clip1, clip2]])
+    final_clip.resize(width=1200).write_videofile("./videos/merge_file_width.mp4")
+    print('done')
+
+    #rd_number = randint(0, 100) # random number for save video
+    #cam1 = cv2.VideoCapture(video_path1)
+    #cam2 = cv2.VideoCapture(video_path2)
+    #frame_width = int(cam1.get(3)) + int(cam2.get(3))
+    #frame_height = int(cam1.get(4))
+    #out1 = cv2.VideoWriter('./videos/merge_{0}'.format(str(rd_number)),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    #while True:
+    #    (ret, img1) = cam1.read()
+    #    (ret, img2) = cam2.read()
+    #    img1 = cv2.resize(img1, (600,600))
+    #    img2 = cv2.resize(img2, (600,600))
+    #    # merge two images
+    #    result = Image.new("RGB", (1200, 600))
+    #    files = [img1, img2]
+    #    for index, img in enumerate(files):
+    #        path = os.path.expanduser('./sample_img/cam1.jpg')
+    #        img = Image.open(path)
+    #        img.thumbnail((400, 400), Image.ANTIALIAS)
+    #        x = index // 2 * 400
+    #        y = index % 2 * 400
+    #        w, h = img.size
+    #        result.paste(img, (x, y, x + w, y + h))
+    #    #total_width = 1200
+    #    #max_height = 600
+    #    #new_im = Image.new('RGB', (total_width, max_height))
+    #    #new_im.paste(img1,(0,0,600,600))
+    #    #new_im.paste(img1, (0, 0, 600, 600))
+    #    #new_im.paste(img2, (600,0, 1200, 600))
+    #    # end merge
+
+    #    cv2.imshow('cam1', img1)
+    #    cv2.imshow('cam2', img2)
+    #    cv2.imshow('merge', new_im)
+    #    out1.write(new_im)
+    #    key = cv2.waitKey(time)
+
+    #    if key == 27:
+    #        break
+    #cam1.release()
+    #cam2.release()
+    #out1.release()
+    #cv2.destroyAllWindows()
+
 def stable(rankings, A, B):
-    r"""
-    rankings[(a, n)] = partner that a ranked n^th
-    >>> from itertools import product
-    >>> A = ['1','2','3','4','5','6']
-    >>> B = ['a','b','c','d','e','f']
-    >>> rank = dict()
-    >>> rank['1'] = (1,4,2,6,5,3)
-    >>> rank['2'] = (3,1,2,4,5,6)
-    >>> rank['3'] = (1,2,4,3,5,6)
-    >>> rank['4'] = (4,1,2,5,3,6)
-    >>> rank['5'] = (1,2,3,6,4,5)
-    >>> rank['6'] = (2,1,4,3,5,6)
-    >>> rank['a'] = (1,2,3,4,5,6)
-    >>> rank['b'] = (2,1,4,3,5,6)
-    >>> rank['c'] = (5,1,6,3,2,4)
-    >>> rank['d'] = (1,3,2,5,4,6)
-    >>> rank['e'] = (4,1,3,6,2,5)
-    >>> rank['f'] = (2,1,4,3,6,5)
-    >>> Arankings = dict(((a, rank[a][b_]), B[b_]) for (a, b_) in product(A, range(0, 6)))
-    >>> Brankings = dict(((b, rank[b][a_]), A[a_]) for (b, a_) in product(B, range(0, 6)))
-    >>> rankings = Arankings
-    >>> rankings.update(Brankings)
-    >>> stable(rankings, A, B)
-    [('1', 'a'), ('2', 'b'), ('3', 'd'), ('4', 'f'), ('5', 'c'), ('6', 'e')]
-    """
     partners = dict((a, (rankings[(a, 1)], 1)) for a in A)
     is_stable = False # whether the current pairing (given by `partners`) is stable
     while is_stable == False:
@@ -397,26 +427,5 @@ def stable(rankings, A, B):
 #run_two_camera()
 #crop_video('./videos/videofile_intown.avi', './videos/video2.avi')
 #devide_video('./videos/videofile_intown.avi', './videos/devide_video1.avi', './videos/devide_video2.avi')
-#play_multiple_video('./videos/outpy_24_devide_video1.avi','./videos/outpy_24_devide_video2.avi')
-
-
-A = ['1','2','3','4','5','6']
-B = ['a','b','c','d','e','f']
-rank = dict()
-rank['1'] = (1,4,2,6,5,3)
-rank['2'] = (3,1,2,4,5,6)
-rank['3'] = (1,2,4,3,5,6)
-rank['4'] = (4,1,2,5,3,6)
-rank['5'] = (1,2,3,6,4,5)
-rank['6'] = (2,1,4,3,5,6)
-rank['a'] = (1,2,3,4,5,6)
-rank['b'] = (2,1,4,3,5,6)
-rank['c'] = (5,1,6,3,2,4)
-rank['d'] = (1,3,2,5,4,6)
-rank['e'] = (4,1,3,6,2,5)
-rank['f'] = (2,1,4,3,6,5)
-Arankings = dict(((a, rank[a][b_]), B[b_]) for (a, b_) in product(A, range(0, 6)))
-Brankings = dict(((b, rank[b][a_]), A[a_]) for (b, a_) in product(B, range(0, 6)))
-rankings = Arankings
-rankings.update(Brankings)
-stable(rankings, A, B)
+#play_multiple_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')
+merge_two_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')

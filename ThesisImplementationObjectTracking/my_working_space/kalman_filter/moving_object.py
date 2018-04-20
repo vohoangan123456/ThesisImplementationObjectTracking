@@ -49,6 +49,7 @@ class FeatureMatching:
         index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
         search_params = dict(checks = 50)
         self.flann = cv2.FlannBasedMatcher(index_params, search_params)
+        self.bf_matcher = cv2.BFMatcher()
 
     def compute_diff(self, desc1, desc2):
         '''
@@ -60,14 +61,17 @@ class FeatureMatching:
             Returns:
                 the number of matching points
         '''
-        if desc1 == None or desc2 == None:
+        if desc1 is None or desc2 is None:
             return 0
         
-        matches = self.flann.knnMatch(desc1,desc2, k=2)
+        #matches = self.flann.knnMatch(desc1, desc2, k=2)
+        matches = self.bf_matcher.knnMatch(desc1, desc2, k=2)
         good = []
-        for m,n in matches:
-            if m.distance < 0.7*n.distance:
-                good.append(m)
+        if len(matches) > 0 and len(matches[0]) == 2:
+            for m,n in matches:
+                if m.distance < 0.7*n.distance:
+                    good.append(m)
+        
         return len(good)
 
     def compare_object(self, obj1, obj2, feature_label:str):
@@ -83,11 +87,11 @@ class FeatureMatching:
         '''
         diff_value = 0
         if feature_label == LIST_FEATURE_EXTRACTION[1]:     # hu invariant
-            diff_value = abs(np.array(obj1.hu_moment_feature) - np.array(obj2.hu_moment_feature))
+            diff_value = abs(np.array(obj1.HU_feature) - np.array(obj2.HU_feature))
         elif feature_label == LIST_FEATURE_EXTRACTION[2]:   # color histogram
-            diff_value = cv2.compareHist(obj1.color_histogram_feature, obj2.color_histogram_feature, cv2.HISTCMP_INTERSECT)
+            diff_value = cv2.compareHist(obj1.CH_feature, obj2.CH_feature, cv2.HISTCMP_INTERSECT)
         elif feature_label == LIST_FEATURE_EXTRACTION[3]:   # sift
-            diff_value = self.compute_diff(obj1.surf_feature['Descriptor'], obj2.surf_feature['Descriptor'])
+            diff_value = self.compute_diff(obj1.SI_feature[1], obj2.SI_feature[1])
         return diff_value
 
 class BoundingBox:
@@ -153,6 +157,7 @@ class MovingObject:
         '''
         feature_matching = FeatureMatching()
         HU_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[1])
+        HU_diff = np.sum(HU_diff)
         CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
         SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
         vector_diff = maxsize

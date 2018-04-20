@@ -62,7 +62,8 @@ class Tracker(object):
         Return:
             None
         """
-
+        if len(list_moving_obj) == 0:
+            return
         # Create tracks if no tracks vector found
         if (len(self.tracks) == 0):
             for i in range(len(list_moving_obj)):
@@ -130,6 +131,7 @@ class Tracker(object):
             existed_in_fov = self.fov.check_moving_obj_inside_FOV(list_moving_obj[i])
             # add object in fov to list
             if existed_in_fov:
+                self.get_position_in_fov(list_moving_obj[i])
                 self.object_in_fov.append(list_moving_obj[i])
             if i not in assignment:
                 # if the moving object is unassigned but it's inside FOV => it was assigned in the other camera
@@ -202,7 +204,7 @@ class Tracker(object):
                 self.tracks.append(track)
             else:
                 index = list_pair.index(list_moving_obj[self.un_assigned_detects[i]])
-                track = Track(list_most_familiar[index], list_moving_obj[self.un_assigned_detects[i]])
+                track = Track(list_most_familiar[index].label, list_moving_obj[self.un_assigned_detects[i]])
                 self.tracks.append(track)
 
         #for i in range(len(self.un_assigned_detects)):
