@@ -293,6 +293,8 @@ def devide_video(video_path, out_path1, out_path2):
     save = False
     while True:
         (ret, img1) = cam1.read()
+        if img1 is None:
+            break
         output_img1 = img1[
                             0:frame_height,
                             0:frame_width
@@ -302,8 +304,7 @@ def devide_video(video_path, out_path1, out_path2):
                             one_part: one_part + frame_width
                         ]
         
-        if img1 is None:
-            break
+        
         if cv2.waitKey(18) == ord('e'):
             save = True
         cv2.imshow('cam1', output_img1)
@@ -419,6 +420,22 @@ def stable(rankings, A, B):
                     else:
                         is_paired = True
     return sorted((a, b) for (a, (b, n)) in partners.items())
+
+def run_with_previous(videopath):
+    import copy
+    cam1 = cv2.VideoCapture(videopath)
+    previous = None
+    while True:
+        (ret, img1) = cam1.read()
+        img1 = cv2.resize(img1, (600,600))
+
+        cv2.imshow('cam1', img1)
+        if previous is not None:
+            cv2.imshow('previous', previous)
+        key = cv2.waitKey(50)
+        if key == 27:
+            break
+        previous = copy.copy(img1)
 #run_with_orb();
 #find_fov();
 #fov_handle();
@@ -426,6 +443,7 @@ def stable(rankings, A, B):
 #run_with_sift();
 #run_two_camera()
 #crop_video('./videos/videofile_intown.avi', './videos/video2.avi')
-#devide_video('./videos/videofile_intown.avi', './videos/devide_video1.avi', './videos/devide_video2.avi')
-#play_multiple_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')
-merge_two_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')
+devide_video('./videos/video2.avi', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
+#play_multiple_video('./videos/outpy_7_videofile_intown.avi','./videos/videofile_intown.avi')
+#merge_two_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')
+#run_with_previous('./videos/outpy_7_videofile_intown.avi')

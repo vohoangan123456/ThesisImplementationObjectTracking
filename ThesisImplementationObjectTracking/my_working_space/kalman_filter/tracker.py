@@ -17,6 +17,7 @@ from my_working_space.kalman_filter.field_of_view import CommonFOV
 from my_working_space.kalman_filter.common import stable_matching
 
 THRESHOLD = 160
+WEIGHT = [2,1]  # [diff_distance, diff_feature]
 
 class Track(object):
     def __init__(self, trackIdCount, moving_obj):
@@ -30,7 +31,7 @@ class Track(object):
 
 
 class Tracker(object):
-    def __init__(self, dist_thresh, max_frames_to_skip, max_trace_length, trackIdCount):
+    def __init__(self, dist_thresh, max_frames_to_skip, max_trace_length, trackIdCount, camId):
         """Initialize variable used by Tracker class
         Args:
             dist_thresh: distance threshold. When exceeds the threshold,
@@ -50,6 +51,7 @@ class Tracker(object):
         self.un_assigned_detects = []
         self.object_in_fov = []
         self.fov = CommonFOV()
+        self.camera_id = camId
 
     def get_FOV(self, target_cam, source_cam):
         # init two FOV of two camera
@@ -64,6 +66,8 @@ class Tracker(object):
         """
         if len(list_moving_obj) == 0:
             return
+        for object in list_moving_obj:
+            self.get_position_in_fov(object)
         # Create tracks if no tracks vector found
         if (len(self.tracks) == 0):
             for i in range(len(list_moving_obj)):
@@ -80,9 +84,11 @@ class Tracker(object):
             for j in range(len(list_moving_obj)):
                 try:
                     diff = self.tracks[i].prediction - list_moving_obj[j].center
+                    diff_vector = self.tracks[i].moving_obj.compare_other(list_moving_obj[j])
                     distance = np.sqrt(diff[0][0]*diff[0][0] +
                                        diff[1][0]*diff[1][0])
-                    cost[i][j] = distance
+
+                    cost[i][j] =distance# (WEIGHT[0] * distance / (self.tracks[i].skipped_frames + 1) + WEIGHT[1] * diff_vector)
                 except:
                     pass
 
@@ -98,8 +104,10 @@ class Tracker(object):
 
         # Identify tracks with no assignment, if any
         un_assigned_tracks = []
+        print('# cost')
         for i in range(len(assignment)):
             if (assignment[i] != -1):
+                print('id: {0}; cost: {1}'.format(self.tracks[i].track_id, cost[i][assignment[i]]))
                 # check for cost distance threshold.
                 # If cost is very high then un_assign (delete) the track
                 if (cost[i][assignment[i]] > self.dist_thresh):
@@ -180,6 +188,23 @@ class Tracker(object):
         moving_obj.set_vector(nearest_point)
         return nearest_point
 
+    def update_single_camera(self, list_moving_obj):
+        for i in range(len(self.un_assigned_detects)):
+            track = Track(self.trackIdCount, list_moving_obj[self.un_assigned_detects[i]])
+            self.trackIdCount += 1
+            self.tracks.append(track)
+    def assign_label_second_camera_first_frame(self, list_moving_obj, another_tracker):
+        for i in range(len(list_moving_obj)):
+            # check if the selected moving object is in the fov
+            existed_in_fov = self.fov.check_moving_obj_inside_FOV(list_moving_obj[i])
+            # add object in fov to list
+            if existed_in_fov:
+                self.get_position_in_fov(list_moving_obj[i])
+                self.object_in_fov.append(list_moving_obj[i])
+                self.un_assigned_detects.append(i)
+        self.Update_un_assign_detect(list_moving_obj, another_tracker)
+        another_tracker.trackIdCount += len(list_moving_obj)
+
     def Update_un_assign_detect(self, list_moving_obj, another_tracker):
         '''
             Description:
@@ -206,29 +231,3 @@ class Tracker(object):
                 index = list_pair.index(list_moving_obj[self.un_assigned_detects[i]])
                 track = Track(list_most_familiar[index].label, list_moving_obj[self.un_assigned_detects[i]])
                 self.tracks.append(track)
-
-        #for i in range(len(self.un_assigned_detects)):
-        #    # get the vector of unassigned moving object in this camera
-        #    distance = self.get_position_in_fov(list_moving_obj[self.un_assigned_detects[i]])
-
-        #    # find the closest vector of other assigned moving object in other camera
-        #    min_dist = sys.maxsize
-        #    moving_o = None
-        #    for object in another_tracker.tracks:
-        #        # check if the traversed moving object is inside the fov
-        #        if another_tracker.fov.check_moving_obj_inside_FOV(object.moving_obj):
-        #            # compute the vector of the traversed moving object in fov
-        #            dist = another_tracker.get_position_in_fov(object.moving_obj)
-        #            dist = abs(dist - distance)
-        #            if dist < min_dist and dist < THRESHOLD:
-        #                min_dist = dist
-        #                moving_o = object.moving_obj
-
-        #    # in the case that there are no object in another camera move to this camera
-        #    if moving_o is None:
-        #        track = Track(self.trackIdCount, list_moving_obj[self.un_assigned_detects[i]])
-        #        self.trackIdCount += 1
-        #        self.tracks.append(track)
-        #    else:
-        #        track = Track(moving_o.label, list_moving_obj[self.un_assigned_detects[i]])
-        #        self.tracks.append(track)

@@ -72,7 +72,7 @@ class FeatureMatching:
                 if m.distance < 0.7*n.distance:
                     good.append(m)
         
-        return len(good)
+        return 50 - len(good)
 
     def compare_object(self, obj1, obj2, feature_label:str):
         '''
