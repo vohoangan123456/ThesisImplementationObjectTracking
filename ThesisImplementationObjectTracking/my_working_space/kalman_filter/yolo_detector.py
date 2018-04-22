@@ -6,7 +6,12 @@ class yolo_detector:
     def __init__(self, tfNet):
         self.tfNet = tfNet
         self.list_moving_obj = []
+        self.frame_index = 0
     def detect(self, frame):
+        self.frame_index += 1
+        cv2.putText(frame, str('frame: {0}'.format(self.frame_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+        print('--------------------------------', str(self.frame_index), '-----------------------------')
+        print('# detection')
         results = self.tfNet.return_predict(frame)
         self.list_moving_obj = []
         for result in results:
@@ -15,13 +20,15 @@ class yolo_detector:
             if label == 'person':
                 tl = (result['topleft']['x'], result['topleft']['y'])
                 br = (result['bottomright']['x'], result['bottomright']['y'])                
-                bounding_box = BoundingBox(tl[0], tl[1], abs(tl[0] - br[0]), abs(tl[1] - br[1]))
-                moving_obj = MovingObject(frame, bounding_box)
-                moving_obj.get_feature()
-                self.list_moving_obj.append(moving_obj);
-                cv2.rectangle(frame, tl, br, (0, 255, 0), 2)
-                # cv2.putText(frame, str(len(self.list_moving_obj)-1), tl, cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 255), 1)
-                # cv2.putText(frame, str('({0},{1})'.format(tl[0], tl[1])), br, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                if confidence >= 0.55:
+                    bounding_box = BoundingBox(tl[0], tl[1], abs(tl[0] - br[0]), abs(tl[1] - br[1]))
+                    moving_obj = MovingObject(frame, bounding_box)
+                    moving_obj.get_feature()
+                    self.list_moving_obj.append(moving_obj);
+                    cv2.rectangle(frame, tl, br, (0, 255, 0), 1)
+                    cv2.putText(frame, str('({0},{1})'.format(tl[0], tl[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame, str("%.2f" % confidence), (br[0], tl[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
+                print(str("%.2f" % confidence), str('({0},{1})'.format(tl[0], tl[1])))
         # Slower the FPS
         cv2.waitKey(50)
                 
