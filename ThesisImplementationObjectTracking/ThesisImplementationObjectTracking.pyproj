@@ -66,7 +66,14 @@
     <Compile Include="my_working_space\KalmanFilter.py" />
     <Compile Include="my_working_space\kalman_filter\common.py" />
     <Compile Include="my_working_space\kalman_filter\detectors.py" />
+    <Compile Include="my_working_space\kalman_filter\field_of_view.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="my_working_space\kalman_filter\kalman_filter.py" />
+    <Compile Include="my_working_space\kalman_filter\moving_object.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_working_space\kalman_filter\multi_tracker.py" />
     <Compile Include="my_working_space\kalman_filter\object_tracking.py" />
     <Compile Include="my_working_space\kalman_filter\tracker.py" />
     <Compile Include="my_working_space\kalman_filter\yolo_detector.py">
@@ -79,6 +86,9 @@
     <Compile Include="my_working_space\My_Utils.py" />
     <Compile Include="my_working_space\select_object.py" />
     <Compile Include="my_working_space\SIFT_SURF_FAST_ORB.py" />
+    <Compile Include="my_working_space\stuffs\abandoned_functions.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="my_working_space\test_surf.py" />
     <Compile Include="my_working_space\__init__.py" />
     <Compile Include="setup.py" />
@@ -112,6 +122,7 @@
     <Folder Include="darkflow\__pycache__\" />
     <Folder Include="my_working_space\" />
     <Folder Include="my_working_space\kalman_filter\" />
+    <Folder Include="my_working_space\stuffs\" />
     <Folder Include="NewFolder1\" />
     <Folder Include="sample_img\cut_images\" />
     <Folder Include="videos\" />
@@ -245,6 +256,9 @@
     <Content Include="test\training\annotations\2.xml" />
     <Content Include="test\training\images\1.jpg" />
     <Content Include="test\training\images\2.jpg" />
+    <Content Include="videos\campus4-c2.avi" />
+    <Content Include="videos\outpy_92_devide_video1.avi.avi" />
+    <Content Include="videos\outpy_92_devide_video2.avi.avi" />
     <Content Include="videos\videofile_intown.avi" />
     <Content Include="videos\video.avi" />
     <Content Include="videos\video2.avi" />
