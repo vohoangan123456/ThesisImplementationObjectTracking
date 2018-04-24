@@ -64,7 +64,6 @@
     <Compile Include="main.py" />
     <Compile Include="my_working_space\get_points.py" />
     <Compile Include="my_working_space\KalmanFilter.py" />
-    <Compile Include="my_working_space\kalman_filter\common.py" />
     <Compile Include="my_working_space\kalman_filter\detectors.py" />
     <Compile Include="my_working_space\kalman_filter\field_of_view.py">
       <SubType>Code</SubType>
