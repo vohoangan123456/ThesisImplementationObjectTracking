@@ -122,7 +122,6 @@
     <Folder Include="my_working_space\" />
     <Folder Include="my_working_space\kalman_filter\" />
     <Folder Include="my_working_space\stuffs\" />
-    <Folder Include="NewFolder1\" />
     <Folder Include="sample_img\cut_images\" />
     <Folder Include="videos\" />
     <Folder Include="sample_img\" />
