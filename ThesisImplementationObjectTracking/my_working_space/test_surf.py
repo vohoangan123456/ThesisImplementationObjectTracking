@@ -230,26 +230,26 @@ def fov_handle():
             draw_point(fov1, img1)
         
 def run_two_camera():
-    cam1 = cv2.VideoCapture('./videos/4p-c0.avi')
-    cam2 = cv2.VideoCapture('./videos/4p-c1.avi')
-    cam3 = cv2.VideoCapture('./videos/4p-c2.avi')
-    cam4 = cv2.VideoCapture('./videos/4p-c3.avi')
-    count = 14
+    cam1 = cv2.VideoCapture('./videos/sample_video/campus7-c0.avi')
+    cam2 = cv2.VideoCapture('./videos/sample_video/campus7-c1.avi')
+    cam3 = cv2.VideoCapture('./videos/sample_video/campus7-c2.avi')
+    #cam4 = cv2.VideoCapture('./videos/sample_video/4p-c3.avi')
+    count = 15
     while True:
         (ret, img1) = cam1.read()
         (ret, img2) = cam2.read()
         (ret, img3) = cam3.read()
-        (ret, img4) = cam4.read()
+        #(ret, img4) = cam4.read()
 
         cv2.imshow('cam1', img1)
         cv2.imshow('cam2', img2)
         cv2.imshow('cam3', img3)
-        cv2.imshow('cam4', img4)
-        if count == 14:
+        #cv2.imshow('cam4', img4)
+        if count == 15:
             cv2.imwrite("./sample_img/cut_images/%d_cam1.jpg" % count, img1)
             cv2.imwrite("./sample_img/cut_images/%d_cam2.jpg" % count, img2)
             cv2.imwrite("./sample_img/cut_images/%d_cam3.jpg" % count, img3)
-            cv2.imwrite("./sample_img/cut_images/%d_cam4.jpg" % count, img4)
+            #cv2.imwrite("./sample_img/cut_images/%d_cam4.jpg" % count, img4)
             print('cut_image_%d', count)
             count += 1
         if cv2.waitKey(18) == ord('e'):
@@ -352,12 +352,14 @@ def merge_two_video(video_path1, video_path2):
     import imageio
     imageio.plugins.ffmpeg.download()
     from moviepy.editor import VideoFileClip, clips_array
+    from random import randint
+    rd_number = randint(0, 100) # random number for save video
     clip1 = VideoFileClip(video_path1)
     clip2 = VideoFileClip(video_path2)
     #final_clip = concatenate_videoclips([clip1,clip2])
     #final_clip.write_videofile('./videos/merge_video.mp4')
     final_clip = clips_array([[clip1, clip2]])
-    final_clip.resize(width=1200).write_videofile("./videos/merge_file_width.mp4")
+    final_clip.resize(width=1200).write_videofile("./videos/merge_file_width_campusc4_{0}.mp4".format(str(rd_number)))
     print('done')
 
     #rd_number = randint(0, 100) # random number for save video
@@ -436,6 +438,73 @@ def run_with_previous(videopath):
         if key == 27:
             break
         previous = copy.copy(img1)
+
+def save_video(videopath, outputPath):
+    frame = 0;
+    cam1 = cv2.VideoCapture(videopath)
+    frame_width = int(cam1.get(3))
+    frame_height = int(cam1.get(4))
+    out1 = cv2.VideoWriter(outputPath,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    save = False
+    while True:
+        frame += 1
+        (ret, img1) = cam1.read()
+        if img1 is None:
+            break
+        if cv2.waitKey(18) == ord('e') or frame == 700:
+            save = True
+        cv2.putText(img1, str('frame: {0}'.format(frame)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        cv2.imshow('cam1', img1)
+        if save is True:
+            out1.write(img1)
+
+        if cv2.waitKey(18) == ord('q'):
+            break
+    cam1.release()
+    out1.release()
+    cv2.destroyAllWindows()
+def crop_first_image(videopath, outpath):
+    cam1 = cv2.VideoCapture(videopath)
+    (ret, img1) = cam1.read()
+    cv2.imwrite(outpath, img1)
+    cam1.release()
+    cv2.destroyAllWindows()
+
+def get_fov_polygon_from_image(imagePath):
+    from my_working_space.kalman_filter.field_of_view import CommonFOV
+    from my_working_space.kalman_filter.common import convert_homography_to_polygon
+    from shapely.geometry.polygon import Polygon
+    img = cv2.imread(imagePath)
+    greenLower = (10, 200, 100)
+    greenUpper = (64, 255, 255)
+    if img is not None:
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        # define range of white color in HSV
+        # change it according to your need !
+        lower_white = np.array([0,0,200], dtype=np.uint8)
+        upper_white = np.array([0,0,255], dtype=np.uint8)
+
+        # Threshold the HSV image to get only white colors
+        mask = cv2.inRange(hsv, lower_white, upper_white)
+        mask = cv2.erode(mask, None, iterations=2)
+        mask = cv2.dilate(mask, None, iterations=2)
+
+        # find contours in the mask and initialize the current
+        # (x, y) center of the ball
+        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+	        cv2.CHAIN_APPROX_SIMPLE)[-2]
+        center = None
+        # only proceed if at least one contour was found
+        if len(cnts) > 0:
+	        c = max(cnts, key=cv2.contourArea)
+	        list_point = convert_homography_to_polygon(c)
+	        fov = CommonFOV()
+	        fov.polygon = Polygon(list_point)            
+	        fov.draw_polygon(img)
+        cv2.imshow('output', img)
+        cv2.imshow('mask', mask)
+        cv2.waitKey(18);
 #run_with_orb();
 #find_fov();
 #fov_handle();
@@ -443,7 +512,11 @@ def run_with_previous(videopath):
 #run_with_sift();
 #run_two_camera()
 #crop_video('./videos/videofile_intown.avi', './videos/video2.avi')
-devide_video('./videos/video2.avi', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
-#play_multiple_video('./videos/outpy_7_videofile_intown.avi','./videos/videofile_intown.avi')
-#merge_two_video('./videos/outpy_92_devide_video1.avi.avi','./videos/outpy_92_devide_video2.avi.avi')
+#devide_video('./videos/video2.avi', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
+#play_multiple_video('./videos/campus4-c2.avi','./videos/outpy_5_devide_video2_video2.avi')
+#merge_two_video('./videos/outpy_5_devide_video2_video1.avi','./videos/outpy_5_devide_video2_video2.avi')
 #run_with_previous('./videos/outpy_7_videofile_intown.avi')
+#save_video('./videos/sample_video/campus7-c0.avi', './videos/sample_video/edit_campus7-c0.avi')
+#crop_first_image('./videos/sample_video/campus4-c1.avi', './sample_img/cut_images/background_2.jpg')
+#merge_two_video('./videos/sample_video/campus7-c0.avi','./videos/sample_video/campus7-c1.avi')
+get_fov_polygon_from_image('./fov_computing/test1.png')

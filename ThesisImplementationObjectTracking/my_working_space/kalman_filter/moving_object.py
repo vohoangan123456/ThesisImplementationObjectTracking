@@ -165,3 +165,20 @@ class MovingObject:
             vector_diff = pow(self.vector[0] - other_moving_obj.vector[0], 2) + pow(self.vector[1] - other_moving_obj.vector[1], 2)
         return HU_diff * WEIGHTS[0] + CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2] + vector_diff * WEIGHTS[3]
 
+    def compare_other_without_vector(self, other_moving_obj):
+        '''
+            Description:
+                compare this moving object with another moving object
+            Params:
+                other_moiving_obj: the other moving object that need to compute the different
+            Returns:
+                return the different between two moving object
+
+        '''
+        feature_matching = FeatureMatching()
+        HU_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[1])
+        HU_diff = np.sum(HU_diff)
+        CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
+        SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
+        return HU_diff * WEIGHTS[0] + CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2]
+
