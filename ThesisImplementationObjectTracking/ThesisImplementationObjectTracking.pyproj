@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>1f7edb5c-a6ee-4a84-a954-03bcb22e1be1</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>main.py</StartupFile>
+    <StartupFile>my_working_space\test_surf.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -73,6 +73,7 @@
     <Compile Include="my_working_space\kalman_filter\moving_object.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="my_working_space\kalman_filter\multi_tracker.py" />
     <Compile Include="my_working_space\kalman_filter\object_tracking.py" />
     <Compile Include="my_working_space\kalman_filter\tracker.py" />
     <Compile Include="my_working_space\kalman_filter\yolo_detector.py">
@@ -255,6 +256,7 @@
     <Content Include="test\training\annotations\2.xml" />
     <Content Include="test\training\images\1.jpg" />
     <Content Include="test\training\images\2.jpg" />
+    <Content Include="videos\campus4-c2.avi" />
     <Content Include="videos\outpy_92_devide_video1.avi.avi" />
     <Content Include="videos\outpy_92_devide_video2.avi.avi" />
     <Content Include="videos\videofile_intown.avi" />

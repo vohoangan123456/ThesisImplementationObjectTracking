@@ -1,5 +1,5 @@
 '''
-    File name         : tracker.py
+    File name         : multiTracker.py
     File Description  : Tracker Using Kalman Filter & Hungarian Algorithm
     Author            : An Vo Hoang
     Date created      : 10/02/2018
@@ -10,6 +10,7 @@
 # Import python libraries
 import numpy as np
 import sys
+import copy
 from scipy.optimize import linear_sum_assignment
 from my_working_space.kalman_filter.kalman_filter import KalmanFilter
 from my_working_space.kalman_filter.moving_object import MovingObject
@@ -50,130 +51,17 @@ class Tracker(object):
         self.trackIdCount = trackIdCount
         self.un_assigned_detects = []
         self.object_in_fov = []
+        self.object_out_fov = []
+        self.list_moving_obj = []
         self.fov = CommonFOV()
         self.camera_id = camId
 
     def get_FOV(self, target_cam, source_cam):
         # init two FOV of two camera
-        self.fov.get_FOV_of_target_in_source(target_cam, source_cam)        
-    def set_trackIdCount(self, trackIdCount):
-        self.trackIdCount = trackIdCount
-    def Update(self, list_moving_obj):
-        """
-        Args:
-            list_moving_obj: detected moving objects to be tracked
-        Return:
-            None
-        """
-        if len(list_moving_obj) == 0:
-            return
-        #for object in list_moving_obj:
-        #    self.get_position_in_fov(object)
-        # Create tracks if no tracks vector found
-        if (len(self.tracks) == 0):
-            for i in range(len(list_moving_obj)):
-                track = Track(self.trackIdCount, list_moving_obj[i])
-                self.trackIdCount += 1
-                self.tracks.append(track)
+        self.fov.get_FOV_of_target_in_source(target_cam, source_cam)
 
-        # Calculate cost using sum of square distance between
-        # predicted vs detected centroids
-        N = len(self.tracks)
-        M = len(list_moving_obj)
-        cost = np.zeros(shape=(N, M))   # Cost matrix
-        for i in range(len(self.tracks)):
-            for j in range(len(list_moving_obj)):
-                try:
-                    diff = self.tracks[i].prediction - list_moving_obj[j].center
-                    diff_feature = self.tracks[i].moving_obj.compare_other_without_vector(list_moving_obj[j])
-                    distance = np.sqrt(diff[0][0]*diff[0][0] +
-                                       diff[1][0]*diff[1][0])
-
-                    cost[i][j] = (WEIGHT[0] * distance + WEIGHT[1] * diff_feature * self.tracks[i].skipped_frames) / (WEIGHT[0] + WEIGHT[1] * self.tracks[i].skipped_frames)
-                except:
-                    pass
-
-        # Let's average the squared ERROR
-        cost = (0.5) * cost
-        # Using Hungarian Algorithm assign the correct detected measurements to predicted tracks
-        assignment = []
-        for _ in range(N):
-            assignment.append(-1)
-        row_ind, col_ind = linear_sum_assignment(cost)
-        for i in range(len(row_ind)):
-            assignment[row_ind[i]] = col_ind[i]
-
-        # Identify tracks with no assignment, if any
-        un_assigned_tracks = []
-        print('# cost')
-        for i in range(len(assignment)):
-            if (assignment[i] != -1):
-                print('id: {0}; cost: {1}'.format(self.tracks[i].track_id, cost[i][assignment[i]]))
-                # check for cost distance threshold.
-                # If cost is very high then un_assign (delete) the track
-                if (cost[i][assignment[i]] > self.dist_thresh):
-                    assignment[i] = -1
-                    un_assigned_tracks.append(i)
-                pass
-            else:
-                self.tracks[i].skipped_frames += 1
-
-        # If tracks are not detected for long time, remove them
-        del_tracks = []
-        for i in range(len(self.tracks)):
-            if (self.tracks[i].skipped_frames > self.max_frames_to_skip):
-                del_tracks.append(i)
-        if len(del_tracks) > 0:  # only when skipped frame exceeds max
-            for id in del_tracks:
-                if id < len(self.tracks):
-                    del self.tracks[id]
-                    del assignment[id]
-                else:
-                    print("ERROR: id is greater than length of tracks")
-
-        # Now look for un_assigned detects
-        self.un_assigned_detects = []
-        self.object_in_fov = []
-        un_assigned_detects_out_fov = []
-        for i in range(len(list_moving_obj)):
-            # check if the selected moving object is in the fov
-            existed_in_fov = self.fov.check_moving_obj_inside_FOV(list_moving_obj[i])
-            # add object in fov to list
-            if existed_in_fov:
-                self.get_position_in_fov(list_moving_obj[i])
-                self.object_in_fov.append(list_moving_obj[i])
-            if i not in assignment:
-                # if the moving object is unassigned but it's inside FOV => it was assigned in the other camera
-                if existed_in_fov:
-                    self.un_assigned_detects.append(i)
-                else:
-                    un_assigned_detects_out_fov.append(i)
-
-        # Start new tracks with the moving object that first appear in camera
-        if(len(un_assigned_detects_out_fov) != 0):
-            for i in range(len(un_assigned_detects_out_fov)):
-                track = Track(self.trackIdCount, list_moving_obj[un_assigned_detects_out_fov[i]])
-                self.trackIdCount += 1
-                self.tracks.append(track)
-
-        # Update KalmanFilter state, lastResults and tracks trace
-        for i in range(len(assignment)):
-            self.tracks[i].KF.predict()
-
-            if(assignment[i] != -1):
-                self.tracks[i].skipped_frames = 0
-                self.tracks[i].prediction = self.tracks[i].KF.correct(list_moving_obj[assignment[i]].center, 1)
-                list_moving_obj[assignment[i]].set_label(self.tracks[i].track_id)
-                self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
-            else:
-                self.tracks[i].prediction = self.tracks[i].KF.correct(np.array([[0], [0]]), 0)
-
-            if(len(self.tracks[i].trace) > self.max_trace_length):
-                for j in range(len(self.tracks[i].trace) - self.max_trace_length):
-                    del self.tracks[i].trace[j]
-
-            self.tracks[i].trace.append(self.tracks[i].prediction)
-            self.tracks[i].KF.lastResult = self.tracks[i].prediction
+    def set_trackIdCount(self, new_trackIdCount):
+        self.trackIdCount = new_trackIdCount
 
     def get_position_in_fov(self, moving_obj:MovingObject):
         '''
@@ -188,36 +76,58 @@ class Tracker(object):
         # vector = (int(moving_obj.bounding_box.center.x - nearest_point.x), int(moving_obj.bounding_box.center.y - nearest_point.y))
         moving_obj.set_vector(nearest_point)
         return nearest_point
-    def update_cam1(self, list_moving_obj):
+    
+    def devide_in_out_fov_object(self, list_moving_obj):
+        if len(list_moving_obj) == 0:
+            return
+        self.list_moving_obj = list_moving_obj
+        for object in list_moving_obj:
+            self.get_position_in_fov(object)
+
+        # Now look for object is out of FOV        
+        self.object_in_fov = []
+        self.object_out_fov = []
+        for i in range(len(list_moving_obj)):
+            # check if the selected moving object is in the fov
+            existed_in_fov = self.fov.check_moving_obj_inside_FOV(list_moving_obj[i])
+            # add object in fov to list
+            if existed_in_fov:
+                self.object_in_fov.append(list_moving_obj[i])
+            else:
+                self.object_out_fov.append(list_moving_obj[i])
+
+    def Update_out_fov_obj(self):
         """
         Args:
-            list_moving_obj: detected moving objects to be tracked
+            list_moving_obj: detected moving objects are out of fov to be tracked
         Return:
             None
         """
-        if len(list_moving_obj) == 0:
-            return
+        if len(self.list_moving_obj) == 0:
+            return        
+
+        # from here, just assign label for object in object_out_fov list
         # Create tracks if no tracks vector found
         if (len(self.tracks) == 0):
-            for i in range(len(list_moving_obj)):
-                track = Track(self.trackIdCount, list_moving_obj[i])
+            for i in range(len(self.object_out_fov)):
+                track = Track(self.trackIdCount, self.object_out_fov[i])
                 self.trackIdCount += 1
                 self.tracks.append(track)
 
         # Calculate cost using sum of square distance between
         # predicted vs detected centroids
         N = len(self.tracks)
-        M = len(list_moving_obj)
+        M = len(self.object_out_fov)
         cost = np.zeros(shape=(N, M))   # Cost matrix
         for i in range(len(self.tracks)):
-            for j in range(len(list_moving_obj)):
+            for j in range(len(self.object_out_fov)):
                 try:
-                    diff = self.tracks[i].prediction - list_moving_obj[j].center
-                    diff_feature = self.tracks[i].moving_obj.compare_other_without_vector(list_moving_obj[j])
+                    diff = self.tracks[i].prediction - self.object_out_fov[j].center
+                    diff_vector = self.tracks[i].moving_obj.compare_other(self.object_out_fov[j])
                     distance = np.sqrt(diff[0][0]*diff[0][0] +
                                        diff[1][0]*diff[1][0])
 
-                    cost[i][j] = (WEIGHT[0] * distance + WEIGHT[1] * diff_feature * self.tracks[i].skipped_frames) / (WEIGHT[0] + WEIGHT[1] * self.tracks[i].skipped_frames)
+                    cost[i][j] =distance# (WEIGHT[0] * distance / (self.tracks[i].skipped_frames + 1) + WEIGHT[1] * diff_vector)
                 except:
                     pass
 
@@ -260,17 +170,112 @@ class Tracker(object):
                     print("ERROR: id is greater than length of tracks")
 
         # Now look for un_assigned detects
-        self.un_assigned_detects = []
-        self.object_in_fov = []
         un_assigned_detects_out_fov = []
-        for i in range(len(list_moving_obj)):
+        for i in range(len(self.object_out_fov)):
             if i not in assignment:
+                # if the moving object is unassigned
                 un_assigned_detects_out_fov.append(i)
 
         # Start new tracks with the moving object that first appear in camera
         if(len(un_assigned_detects_out_fov) != 0):
             for i in range(len(un_assigned_detects_out_fov)):
-                track = Track(self.trackIdCount, list_moving_obj[un_assigned_detects_out_fov[i]])
+                track = Track(self.trackIdCount, self.object_out_fov[un_assigned_detects_out_fov[i]])
+                self.trackIdCount += 1
+                self.tracks.append(track)
+
+        # Update KalmanFilter state, lastResults and tracks trace
+        for i in range(len(assignment)):
+            self.tracks[i].KF.predict()
+
+            if(assignment[i] != -1):
+                self.tracks[i].skipped_frames = 0
+                self.tracks[i].prediction = self.tracks[i].KF.correct(self.object_out_fov[assignment[i]].center, 1)
+                self.object_out_fov[assignment[i]].set_label(self.tracks[i].track_id)
+                self.tracks[i].moving_obj = self.object_out_fov[assignment[i]]
+            else:
+                self.tracks[i].prediction = self.tracks[i].KF.correct(np.array([[0], [0]]), 0)
+
+            if(len(self.tracks[i].trace) > self.max_trace_length):
+                for j in range(len(self.tracks[i].trace) - self.max_trace_length):
+                    del self.tracks[i].trace[j]
+
+            self.tracks[i].trace.append(self.tracks[i].prediction)
+            self.tracks[i].KF.lastResult = self.tracks[i].prediction
+    def Update(self, list_moving_obj):
+        """
+        Args:
+            list_moving_obj: detected moving objects to be tracked
+        Return:
+            None
+        """
+
+        # Create tracks if no tracks vector found
+        if (len(self.tracks) == 0):
+            for i in range(len(list_moving_obj)):
+                track = Track(self.trackIdCount, list_moving_obj[i])
+                self.trackIdCount += 1
+                self.tracks.append(track)
+
+        # Calculate cost using sum of square distance between
+        # predicted vs detected centroids
+        N = len(self.tracks)
+        M = len(list_moving_obj)
+        cost = np.zeros(shape=(N, M))   # Cost matrix
+        for i in range(len(self.tracks)):
+            for j in range(len(list_moving_obj)):
+                try:
+                    diff = self.tracks[i].prediction - list_moving_obj[j].center
+                    distance = np.sqrt(diff[0][0]*diff[0][0] +
+                                       diff[1][0]*diff[1][0])
+                    cost[i][j] = distance
+                except:
+                    pass
+
+        # Let's average the squared ERROR
+        cost = (0.5) * cost
+        # Using Hungarian Algorithm assign the correct detected measurements to predicted tracks
+        assignment = []
+        for _ in range(N):
+            assignment.append(-1)
+        row_ind, col_ind = linear_sum_assignment(cost)
+        for i in range(len(row_ind)):
+            assignment[row_ind[i]] = col_ind[i]
+
+        # Identify tracks with no assignment, if any
+        un_assigned_tracks = []
+        for i in range(len(assignment)):
+            if (assignment[i] != -1):
+                # check for cost distance threshold.
+                # If cost is very high then un_assign (delete) the track
+                if (cost[i][assignment[i]] > self.dist_thresh):
+                    assignment[i] = -1
+                    un_assigned_tracks.append(i)
+                pass
+            else:
+                self.tracks[i].skipped_frames += 1
+
+        # If tracks are not detected for long time, remove them
+        del_tracks = []
+        for i in range(len(self.tracks)):
+            if (self.tracks[i].skipped_frames > self.max_frames_to_skip):
+                del_tracks.append(i)
+        if len(del_tracks) > 0:  # only when skipped frame exceeds max
+            for id in del_tracks:
+                if id < len(self.tracks):
+                    del self.tracks[id]
+                    del assignment[id]
+                else:
+                    print("ERROR: id is greater than length of tracks")
+
+        # Now look for un_assigned detects
+        un_assigned_detects = []
+        for i in range(len(list_moving_obj)):
+                if i not in assignment:
+                    un_assigned_detects.append(i)
+        # Start new tracks
+        if(len(un_assigned_detects) != 0):
+            for i in range(len(un_assigned_detects)):
+                track = Track(self.trackIdCount, list_moving_obj[un_assigned_detects[i]])
                 self.trackIdCount += 1
                 self.tracks.append(track)
 
@@ -281,7 +286,6 @@ class Tracker(object):
             if(assignment[i] != -1):
                 self.tracks[i].skipped_frames = 0
                 self.tracks[i].prediction = self.tracks[i].KF.correct(list_moving_obj[assignment[i]].center, 1)
-                list_moving_obj[assignment[i]].set_label(self.tracks[i].track_id)
                 self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
             else:
                 self.tracks[i].prediction = self.tracks[i].KF.correct(np.array([[0], [0]]), 0)
@@ -292,46 +296,142 @@ class Tracker(object):
 
             self.tracks[i].trace.append(self.tracks[i].prediction)
             self.tracks[i].KF.lastResult = self.tracks[i].prediction
-    def update_single_camera(self, list_moving_obj):
-        for i in range(len(self.un_assigned_detects)):
-            track = Track(self.trackIdCount, list_moving_obj[self.un_assigned_detects[i]])
-            self.trackIdCount += 1
-            self.tracks.append(track)
-    def assign_label_second_camera_first_frame(self, list_moving_obj, another_tracker):
-        for i in range(len(list_moving_obj)):
-            # check if the selected moving object is in the fov
-            existed_in_fov = self.fov.check_moving_obj_inside_FOV(list_moving_obj[i])
-            # add object in fov to list
-            if existed_in_fov:
-                self.get_position_in_fov(list_moving_obj[i])
-                self.object_in_fov.append(list_moving_obj[i])
-                self.un_assigned_detects.append(i)
-        self.Update_un_assign_detect(list_moving_obj, another_tracker)
-        another_tracker.trackIdCount += len(list_moving_obj)
 
-    def Update_un_assign_detect(self, list_moving_obj, another_tracker):
+class MultiTracker:
+    def consistent_label(tracker1, tracker2):
         '''
             Description:
-                assign for unassigned moving object that exist inside the FOV
+                assign label for object inside fov
             Params:
                 list_moving_obj: list of all detected moving objects
                 another_tracker: the tracker of the other camera that is the owner of FOV
         '''
+        trackIdCount = max(tracker1.trackIdCount, tracker2.trackIdCount)
         list_pair = []
         list_most_familiar = []
-        if len(self.un_assigned_detects) > 0:
-            list_unassigned_obj = []
-            for index in self.un_assigned_detects:
-                list_unassigned_obj.append(list_moving_obj[index])
-            list_pair, list_most_familiar = stable_matching(list_unassigned_obj, another_tracker.object_in_fov)
+        list_pair, list_most_familiar = stable_matching(tracker1.object_in_fov, tracker2.object_in_fov)
 
-        for i in range(len(self.un_assigned_detects)):
-            # in the case that there are no object in another camera move to this camera
-            if list_moving_obj[self.un_assigned_detects[i]] not in list_pair:
-                track = Track(self.trackIdCount, list_moving_obj[self.un_assigned_detects[i]])
+        # create new track for object with no matching
+        for object in tracker1.object_in_fov:
+            if object not in list_pair:
+                track1 = Track(trackIdCount, object)
+                trackIdCount += 1
+                tracker1.tracks.append(track1)
+
+        for object in tracker2.object_in_fov:
+            if object not in list_most_familiar:
+                track2 = Track(trackIdCount, object)
+                trackIdCount += 1
+                tracker2.tracks.append(track2)
+        # consist label in pair
+        for index in range(0, len(list_pair)):
+            pair_obj = list_pair[index]
+            similar_obj = list_most_familiar[index]
+
+            # if two object hadn't been assigned yet
+            if pair_obj.label == 0 and similar_obj.label == 0:
+                # create new track for pair object
+                track3 = Track(trackIdCount, pair_obj)
+                tracker1.tracks.append(track3)
+                # create new track for similar object
+                track4 = Track(trackIdCount, similar_obj)
+                trackIdCount += 1
+                tracker2.tracks.append(track4)
+            elif pair_obj.label == 0:   # in the case object in cam1 need to assign
+                track5 = Track(similar_obj.label, pair_obj)
+                tracker1.tracks.append(track5)
+            elif similar_obj.label == 0:    # in the case object in cam2 need to assign
+                track6 = Track(pair_obj.label, similar_obj)
+                tracker2.tracks.append(track6)
+            #elif pair_obj.label != similar_obj.label:   # in the case two object are assign different
+
+        # Calculate cost using sum of square distance between
+        # predicted vs detected centroids
+        N = len(self.tracks)
+        M = len(object_out_fov)
+        cost = np.zeros(shape=(N, M))   # Cost matrix
+        for i in range(len(self.tracks)):
+            for j in range(len(object_out_fov)):
+                try:
+                    diff = self.tracks[i].prediction - object_out_fov[j].center
+                    diff_vector = self.tracks[i].moving_obj.compare_other(object_out_fov[j])
+                    distance = np.sqrt(diff[0][0]*diff[0][0] +
+                                       diff[1][0]*diff[1][0])
+
+                    cost[i][j] =distance# (WEIGHT[0] * distance / (self.tracks[i].skipped_frames + 1) + WEIGHT[1] * diff_vector)
+                except:
+                    pass
+
+        # Let's average the squared ERROR
+        cost = (0.5) * cost
+        # Using Hungarian Algorithm assign the correct detected measurements to predicted tracks
+        assignment = []
+        for _ in range(N):
+            assignment.append(-1)
+        row_ind, col_ind = linear_sum_assignment(cost)
+        for i in range(len(row_ind)):
+            assignment[row_ind[i]] = col_ind[i]
+
+        # Identify tracks with no assignment, if any
+        un_assigned_tracks = []
+        print('# cost')
+        for i in range(len(assignment)):
+            if (assignment[i] != -1):
+                print('id: {0}; cost: {1}'.format(self.tracks[i].track_id, cost[i][assignment[i]]))
+                # check for cost distance threshold.
+                # If cost is very high then un_assign (delete) the track
+                if (cost[i][assignment[i]] > self.dist_thresh):
+                    assignment[i] = -1
+                    un_assigned_tracks.append(i)
+                pass
+            else:
+                self.tracks[i].skipped_frames += 1
+
+        # If tracks are not detected for long time, remove them
+        del_tracks = []
+        for i in range(len(self.tracks)):
+            if (self.tracks[i].skipped_frames > self.max_frames_to_skip):
+                del_tracks.append(i)
+        if len(del_tracks) > 0:  # only when skipped frame exceeds max
+            for id in del_tracks:
+                if id < len(self.tracks):
+                    del self.tracks[id]
+                    del assignment[id]
+                else:
+                    print("ERROR: id is greater than length of tracks")
+
+        # Now look for un_assigned detects
+        un_assigned_detects_out_fov = []
+        for i in range(len(object_out_fov)):
+            if i not in assignment:
+                # if the moving object is unassigned
+                un_assigned_detects_out_fov.append(i)
+
+        # Start new tracks with the moving object that first appear in camera
+        if(len(un_assigned_detects_out_fov) != 0):
+            for i in range(len(un_assigned_detects_out_fov)):
+                track = Track(self.trackIdCount, object_out_fov[un_assigned_detects_out_fov[i]])
                 self.trackIdCount += 1
                 self.tracks.append(track)
+
+        # Update KalmanFilter state, lastResults and tracks trace
+        for i in range(len(assignment)):
+            self.tracks[i].KF.predict()
+
+            if(assignment[i] != -1):
+                self.tracks[i].skipped_frames = 0
+                self.tracks[i].prediction = self.tracks[i].KF.correct(object_out_fov[assignment[i]].center, 1)
+                object_out_fov[assignment[i]].set_label(self.tracks[i].track_id)
+                self.tracks[i].moving_obj = object_out_fov[assignment[i]]
             else:
-                index = list_pair.index(list_moving_obj[self.un_assigned_detects[i]])
-                track = Track(list_most_familiar[index].label, list_moving_obj[self.un_assigned_detects[i]])
-                self.tracks.append(track)
+                self.tracks[i].prediction = self.tracks[i].KF.correct(np.array([[0], [0]]), 0)
+
+            if(len(self.tracks[i].trace) > self.max_trace_length):
+                for j in range(len(self.tracks[i].trace) - self.max_trace_length):
+                    del self.tracks[i].trace[j]
+
+            self.tracks[i].trace.append(self.tracks[i].prediction)
+            self.tracks[i].KF.lastResult = self.tracks[i].prediction
+        tracker1.trackIdCount = trackIdCount
+        tracker2.trackIdCount = trackIdCount
+        
