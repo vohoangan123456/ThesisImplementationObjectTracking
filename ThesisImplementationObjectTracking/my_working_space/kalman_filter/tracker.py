@@ -14,10 +14,10 @@ from scipy.optimize import linear_sum_assignment
 from my_working_space.kalman_filter.kalman_filter import KalmanFilter
 from my_working_space.kalman_filter.moving_object import MovingObject
 from my_working_space.kalman_filter.field_of_view import CommonFOV
-from my_working_space.kalman_filter.common import stable_matching
+from my_working_space.kalman_filter.common import stable_matching, get_fov_from_image, iou_compute
 
 THRESHOLD = 160
-WEIGHT = [2,1]  # [diff_distance, diff_feature]
+WEIGHT = [4,1]  # [diff_distance, diff_feature]
 
 class Track(object):
     def __init__(self, trackIdCount, moving_obj):
@@ -53,9 +53,13 @@ class Tracker(object):
         self.fov = CommonFOV()
         self.camera_id = camId
 
-    def get_FOV(self, target_cam, source_cam):
+    def get_FOV(self, target_cam, source_cam, img_path = None):
         # init two FOV of two camera
-        self.fov.get_FOV_of_target_in_source(target_cam, source_cam)        
+        if img_path is not None:
+            list_point = get_fov_from_image(img_path)
+            self.fov.generate_fov_from_list_point(list_point)
+        else:
+            self.fov.get_FOV_of_target_in_source(target_cam, source_cam)
     def set_trackIdCount(self, trackIdCount):
         self.trackIdCount = trackIdCount
     def Update(self, list_moving_obj):
@@ -65,16 +69,6 @@ class Tracker(object):
         Return:
             None
         """
-        if len(list_moving_obj) == 0:
-            return
-        #for object in list_moving_obj:
-        #    self.get_position_in_fov(object)
-        # Create tracks if no tracks vector found
-        if (len(self.tracks) == 0):
-            for i in range(len(list_moving_obj)):
-                track = Track(self.trackIdCount, list_moving_obj[i])
-                self.trackIdCount += 1
-                self.tracks.append(track)
 
         # Calculate cost using sum of square distance between
         # predicted vs detected centroids
@@ -84,12 +78,37 @@ class Tracker(object):
         for i in range(len(self.tracks)):
             for j in range(len(list_moving_obj)):
                 try:
-                    diff = self.tracks[i].prediction - list_moving_obj[j].center
-                    diff_feature = self.tracks[i].moving_obj.compare_other_without_vector(list_moving_obj[j])
-                    distance = np.sqrt(diff[0][0]*diff[0][0] +
-                                       diff[1][0]*diff[1][0])
+                    #diff = self.tracks[i].prediction - list_moving_obj[j].center
+                    #diff_feature = self.tracks[i].moving_obj.compare_other_in_one_camera(list_moving_obj[j])
+                    #distance = np.sqrt(diff[0][0]*diff[0][0] +
+                    #                   diff[1][0]*diff[1][0])
+                    ##cost[i][j] = diff_feature
+                    #cost[i][j] = (WEIGHT[0] * distance + WEIGHT[1] * diff_feature * self.tracks[i].skipped_frames) / (WEIGHT[0] + WEIGHT[1] * self.tracks[i].skipped_frames)
+                    previousObj = self.tracks[i].moving_obj
+                    delta = self.tracks[i].prediction - previousObj.center
+                    predictTopLeft = previousObj.topLeft + delta
+                    predictTopRight = previousObj.topRight + delta
+                    predictBottomLeft = previousObj.bottomLeft + delta
+                    predictBottomRight = previousObj.bottomRight + delta
+                    diff_1 = predictTopLeft - list_moving_obj[j].topLeft
+                    diff_2 = predictTopRight - list_moving_obj[j].topRight
+                    diff_3 = predictBottomLeft - list_moving_obj[j].bottomLeft
+                    diff_4 = predictBottomRight - list_moving_obj[j].bottomRight
+                    distance_1 = np.sqrt(diff_1[0][0]*diff_1[0][0] + diff_1[1][0]*diff_1[1][0])
+                    distance_2 = np.sqrt(diff_2[0][0]*diff_2[0][0] + diff_2[1][0]*diff_2[1][0])
+                    distance_3 = np.sqrt(diff_3[0][0]*diff_3[0][0] + diff_3[1][0]*diff_3[1][0])
+                    distance_4 = np.sqrt(diff_4[0][0]*diff_4[0][0] + diff_4[1][0]*diff_4[1][0])
+                    bb_test = [previousObj.topLeft[0][0], previousObj.topLeft[1][0], previousObj.bottomRight[0][0], previousObj.bottomRight[1][0]]
+                    bb_gt = [list_moving_obj[j].topLeft[0][0], list_moving_obj[j].topLeft[1][0], list_moving_obj[j].bottomRight[0][0], list_moving_obj[j].bottomRight[1][0]]
+                    iou = iou_compute(bb_test, bb_gt)
 
-                    cost[i][j] = (WEIGHT[0] * distance + WEIGHT[1] * diff_feature * self.tracks[i].skipped_frames) / (WEIGHT[0] + WEIGHT[1] * self.tracks[i].skipped_frames)
+                    diff = self.tracks[i].prediction - list_moving_obj[j].center
+                    diff_feature = 1 / self.tracks[i].moving_obj.compare_other_without_vector(list_moving_obj[j])
+                    distances = np.sqrt(diff[0][0]*diff[0][0] +
+                                       diff[1][0]*diff[1][0])
+                    distance = 1 - iou #distance_1 + distance_2 + distance_3 + distance_4
+
+                    cost[i][j] = WEIGHT[0] * distance + WEIGHT[1] * diff_feature
                 except:
                     pass
 
@@ -143,6 +162,7 @@ class Tracker(object):
                 self.get_position_in_fov(list_moving_obj[i])
                 self.object_in_fov.append(list_moving_obj[i])
             if i not in assignment:
+                #un_assigned_detects_out_fov.append(i)
                 # if the moving object is unassigned but it's inside FOV => it was assigned in the other camera
                 if existed_in_fov:
                     self.un_assigned_detects.append(i)
@@ -212,12 +232,31 @@ class Tracker(object):
         for i in range(len(self.tracks)):
             for j in range(len(list_moving_obj)):
                 try:
-                    diff = self.tracks[i].prediction - list_moving_obj[j].center
-                    diff_feature = self.tracks[i].moving_obj.compare_other_without_vector(list_moving_obj[j])
-                    distance = np.sqrt(diff[0][0]*diff[0][0] +
-                                       diff[1][0]*diff[1][0])
+                    previousObj = self.tracks[i].moving_obj
+                    delta = self.tracks[i].prediction - previousObj.center
+                    predictTopLeft = previousObj.topLeft + delta
+                    predictTopRight = previousObj.topRight + delta
+                    predictBottomLeft = previousObj.bottomLeft + delta
+                    predictBottomRight = previousObj.bottomRight + delta
+                    diff_1 = predictTopLeft - list_moving_obj[j].topLeft
+                    diff_2 = predictTopRight - list_moving_obj[j].topRight
+                    diff_3 = predictBottomLeft - list_moving_obj[j].bottomLeft
+                    diff_4 = predictBottomRight - list_moving_obj[j].bottomRight
+                    distance_1 = np.sqrt(diff_1[0][0]*diff_1[0][0] + diff_1[1][0]*diff_1[1][0])
+                    distance_2 = np.sqrt(diff_2[0][0]*diff_2[0][0] + diff_2[1][0]*diff_2[1][0])
+                    distance_3 = np.sqrt(diff_3[0][0]*diff_3[0][0] + diff_3[1][0]*diff_3[1][0])
+                    distance_4 = np.sqrt(diff_4[0][0]*diff_4[0][0] + diff_4[1][0]*diff_4[1][0])
+                    bb_test = [previousObj.topLeft[0][0], previousObj.topLeft[1][0], previousObj.bottomRight[0][0], previousObj.bottomRight[1][0]]
+                    bb_gt = [list_moving_obj[j].topLeft[0][0], list_moving_obj[j].topLeft[1][0], list_moving_obj[j].bottomRight[0][0], list_moving_obj[j].bottomRight[1][0]]
+                    iou = iou_compute(bb_test, bb_gt)
 
-                    cost[i][j] = (WEIGHT[0] * distance + WEIGHT[1] * diff_feature * self.tracks[i].skipped_frames) / (WEIGHT[0] + WEIGHT[1] * self.tracks[i].skipped_frames)
+                    diff = self.tracks[i].prediction - list_moving_obj[j].center
+                    diff_feature = 1 / self.tracks[i].moving_obj.compare_other_without_vector(list_moving_obj[j])
+                    distances = np.sqrt(diff[0][0]*diff[0][0] +
+                                       diff[1][0]*diff[1][0])
+                    distance = 1 - iou #distance_1 + distance_2 + distance_3 + distance_4
+
+                    cost[i][j] = WEIGHT[0] * distance + WEIGHT[1] * diff_feature
                 except:
                     pass
 
@@ -335,3 +374,34 @@ class Tracker(object):
                 index = list_pair.index(list_moving_obj[self.un_assigned_detects[i]])
                 track = Track(list_most_familiar[index].label, list_moving_obj[self.un_assigned_detects[i]])
                 self.tracks.append(track)
+    def assign_label_consistent(self, another_tracker):
+        '''
+            Description:
+                assign for unassigned moving object that exist inside the FOV
+            Params:
+                list_moving_obj: list of all detected moving objects
+                another_tracker: the tracker of the other camera that is the owner of FOV
+        '''
+        list_pair = []
+        list_most_familiar = []
+        list_pair, list_most_familiar = stable_matching(self.object_in_fov, another_tracker.object_in_fov)
+
+        for i in range(len(list_pair)):
+            if list_pair[i].label != list_most_familiar[i].label:
+                pair_tracker_index = self.find_index_of_object_in_tracker_by_label(self.tracks, list_pair[i].label)
+                most_familiar_tracker_index = self.find_index_of_object_in_tracker_by_label(another_tracker.tracks, list_most_familiar[i].label)
+                if pair_tracker_index != -1 and most_familiar_tracker_index != -1:
+                    self.tracks[pair_tracker_index].track_id = self.trackIdCount
+                    list_pair[i].label = self.trackIdCount
+                    self.tracks[pair_tracker_index].moving_obj = list_pair[i]
+
+                    another_tracker.tracks[most_familiar_tracker_index].track_id = self.trackIdCount
+                    list_most_familiar[i].label = self.trackIdCount
+                    another_tracker.tracks[most_familiar_tracker_index].moving_obj = list_most_familiar[i]
+                    self.trackIdCount += 1
+
+    def find_index_of_object_in_tracker_by_label(self, trackers, label):
+        for index,tracker in enumerate(trackers):
+            if tracker.track_id == label:
+                return index
+        return -1

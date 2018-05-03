@@ -69,6 +69,9 @@
     <Compile Include="my_working_space\kalman_filter\field_of_view.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="my_working_space\kalman_filter\global_config.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="my_working_space\kalman_filter\kalman_filter.py" />
     <Compile Include="my_working_space\kalman_filter\moving_object.py">
       <SubType>Code</SubType>

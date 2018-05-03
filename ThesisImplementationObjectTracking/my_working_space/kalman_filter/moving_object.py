@@ -4,11 +4,13 @@ from sys import maxsize
 from math import pow
 import cv2
 LIST_FEATURE_EXTRACTION = ['momentColor', 'huInvariance', 'colorHistogram', 'sift', 'surf']
-WEIGHTS = [1, 2, 2, 3] # weight of the features that use for compute different between two object
+WEIGHTS = [100, 2, 2, 3] # weight of the features that use for compute different between two object
+THRESHOLD_Y = 20
 class FeatureExtractor:
     def __init__(self, image):
         self.image = image
         self.gray_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        self.hsv_image = cv2.cvtColor(self.image, cv2.COLOR_HSV2RGB)
         return
 
     def extract_hu_moment(self):
@@ -27,7 +29,7 @@ class FeatureExtractor:
             Return:
                 color histogram
         '''
-        hist = cv2.calcHist([self.image], [0, 1, 2], None, [8, 8, 8],
+        hist = cv2.calcHist([self.hsv_image], [0, 1, 2], None, [8, 8, 8],
                             [0, 256, 0, 256, 0, 256])
         hist = cv2.normalize(hist, hist).flatten()
         return hist
@@ -98,9 +100,61 @@ class BoundingBox:
     def __init__(self, pX, pY, width, height):
         self.pX = pX
         self.pY = pY
+        self.pXmax = pX + width
+        self.pYmax = pY + height
         self.width = width
         self.height = height
-        self.center:Point = Point(pX + width / 2, pY + height / 2)
+        self.center:Point = Point(pX, pY + height)
+        self.area = width * height
+        self.is_under_of_occlusion = False  # flag check this bbx is under of another bbx
+        self.is_topleft_occlusion = None    # flag check this bbx is under of another bbx and position is in topleft
+
+    def check_intersec_each_other(self, another_bbx):
+        '''
+            Description:
+                check the whether this bbx intersect with another_bbx
+            Params:
+                another_bbx: the another bbx that intersect with this bbx
+            Returns:
+                bool: two bbx is intersected or not
+        '''
+        dx = min(self.pXmax, another_bbx.pXmax) - max(self.pX, another_bbx.pX)  # = delta x = min of top left x - max of bottom right x
+        dy = min(self.pYmax, another_bbx.pYmax) - max(self.pY, another_bbx.pY)  # = delta y = min of top left y - max of bottom right y
+        if (dx>=0) and (dy>=0):
+            return True
+        return False
+    def check_direction_of_intersec(self, another_bbx):
+        '''
+            Description:
+                check the position top, left, right, bottom of this bbx to another_bbx
+            params:
+                another_bbx: the another bbx that intersect with this bbx
+            returns:
+                topLeft:bool    if True this rect is in top-left of another_bbx ortherwise is in bottom-right
+        '''
+        topLeft = min(self.pX, another_bbx.pX) == self.pX or min(self.pY, another_bbx.pY) == self.pY
+        self.is_topleft_occlusion = topLeft
+        return topLeft
+    def check_behind_of_otherbbx(self, another_bbx):
+        '''
+            Description:
+                check the whether this bbx is behind or in front of another_bbx
+            Params:
+                another_bbx: the another bbx that intersect with this bbx
+            Returns: bool
+                True: this bbx is behind another_bbx
+                False: this bbx is in front of another_bbx
+        '''
+        result = False
+        if abs(self.pYmax - another_bbx.pYmax) > THRESHOLD_Y:
+            # compare if y axis are much different
+            maxY = max(self.pYmax, another_bbx.pYmax)
+            result = maxY == another_bbx.pYmax
+        else:
+            # if two y axis are slightly different, we need to add bbx area criterion
+            result = self.area < another_bbx.area
+        self.is_under_of_occlusion = result
+        return result;
 
 class MovingObject:
     def __init__(self, image, bounding_box:BoundingBox):
@@ -110,12 +164,21 @@ class MovingObject:
                             self.bounding_box.pX:self.bounding_box.pX + self.bounding_box.width
                         ]
         self.label = 0
-        [x,y] = [bounding_box.center.x, bounding_box.center.y]
-        self.center = np.round(np.array([[x], [y]]))
+        #[x,y] = [bounding_box.center.x, bounding_box.center.y]
+        #self.center = np.round(np.array([[x], [y]]))
+        [x,y] = [bounding_box.pX, bounding_box.pY]
+        self.center = np.round(np.array([[x], [y + bounding_box.height]]))
+        self.topLeft = np.round(np.array([[x], [y]]))
+        self.topRight = np.round(np.array([[x + bounding_box.width], [y]]))
+        self.bottomLeft = np.round(np.array([[x], [y + bounding_box.height]]))
+        self.bottomRight = np.round(np.array([[x + bounding_box.width], [y + bounding_box.height]]))
+
         self.HU_feature = None  # hu invariants
         self.CH_feature = None  # color histogram
         self.SI_feature = None  # sift
         self.vector = None      # vector from moving object to the nearest point in FOV
+        self.is_in_fov = False
+        self.confidence = 0
 
     def set_label(self, label:str):
         '''
@@ -125,6 +188,8 @@ class MovingObject:
                 label: label that need to set for object
         '''
         self.label = label
+    def set_confidence(self, confidence):
+        self.confidence = confidence
 
     def set_vector(self, nearest_point):
         '''
@@ -176,9 +241,25 @@ class MovingObject:
 
         '''
         feature_matching = FeatureMatching()
+        #HU_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[1])
+        #HU_diff = np.sum(HU_diff)
+        CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
+        #SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
+        return CH_diff * WEIGHTS[1]# + SI_diff * WEIGHTS[2]
+    def compare_other_in_one_camera(self, other_moving_obj):
+        '''
+            Description:
+                compare this moving object with another moving object
+            Params:
+                other_moiving_obj: the other moving object that need to compute the different
+            Returns:
+                return the different between two moving object
+
+        '''
+        feature_matching = FeatureMatching()
         HU_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[1])
         HU_diff = np.sum(HU_diff)
         CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
         SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
-        return HU_diff * WEIGHTS[0] + CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2]
+        return CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2]
 

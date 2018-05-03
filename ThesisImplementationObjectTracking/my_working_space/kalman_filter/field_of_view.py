@@ -4,7 +4,6 @@ from my_working_space.kalman_filter.common import convert_homography_to_polygon
 from my_working_space.kalman_filter.moving_object import MovingObject
 import numpy as np
 import cv2
-
 class CommonFOV:
     def __init__(self):
         '''
@@ -49,7 +48,10 @@ class CommonFOV:
         top_right = Point(moving_obj.bounding_box.pX + moving_obj.bounding_box.width, moving_obj.bounding_box.pY)   
         
         # return true if any of vertex is inside FOV
-        return self.polygon.contains(top_left) or self.polygon.contains(bottom_left) or self.polygon.contains(bottom_right) or self.polygon.contains(top_right)
+        return_value = self.polygon.contains(top_left) or self.polygon.contains(bottom_left) or self.polygon.contains(bottom_right) or self.polygon.contains(top_right)
+        if return_value is True:
+            moving_obj.is_in_fov = True
+        return return_value
 
     def get_FOV_of_target_in_source(self, target_cam, source_cam):
         '''
@@ -114,3 +116,7 @@ class CommonFOV:
         nearest_distance = self.polygon.exterior.project(point)
         nearest_point = self.polygon.exterior.interpolate(nearest_distance)
         return nearest_point
+
+    def generate_fov_from_list_point(self, list_point):
+        self.list_point = list_point
+        self.polygon = Polygon(list_point)
