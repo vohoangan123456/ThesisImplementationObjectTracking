@@ -14,7 +14,6 @@ import os
 from random import randint
 from my_working_space.kalman_filter.yolo_detector import yolo_detector
 from my_working_space.kalman_filter.tracker import Tracker
-from my_working_space.kalman_filter.sort import Sort
 #from my_working_space.kalman_filter.multi_tracker import MultiTracker, Tracker
 from darkflow.net.build import TFNet
 
@@ -203,7 +202,12 @@ def tracking_single_camera(videopath, options):
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
                 cv2.rectangle(frame1, tl, br, (0, 255, 0), 1)
                 cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame1, str('({0},{1})'.format(tl[0], tl[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.putText(frame1, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                if moving_obj_track.bounding_box.is_under_of_occlusion is True:
+                    position = 'b-r';
+                    if moving_obj_track.bounding_box.is_topleft_occlusion is True:
+                        position = 't-l'
+                    cv2.putText(frame1, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
         cv2.imshow('Tracking1', frame1)
         #save frame to video
         out1.write(frame1)

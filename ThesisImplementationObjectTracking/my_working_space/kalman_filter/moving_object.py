@@ -3,6 +3,7 @@ import numpy as np
 from sys import maxsize
 from math import pow
 import cv2
+import copy
 LIST_FEATURE_EXTRACTION = ['momentColor', 'huInvariance', 'colorHistogram', 'sift', 'surf']
 WEIGHTS = [100, 2, 2, 3] # weight of the features that use for compute different between two object
 THRESHOLD_Y = 20
@@ -108,6 +109,7 @@ class BoundingBox:
         self.area = width * height
         self.is_under_of_occlusion = False  # flag check this bbx is under of another bbx
         self.is_topleft_occlusion = None    # flag check this bbx is under of another bbx and position is in topleft
+        self.overlap_percent = 0            # percentage of overlapping
 
     def check_intersec_each_other(self, another_bbx):
         '''
@@ -130,9 +132,9 @@ class BoundingBox:
             params:
                 another_bbx: the another bbx that intersect with this bbx
             returns:
-                topLeft:bool    if True this rect is in top-left of another_bbx ortherwise is in bottom-right
+                topLeft:bool    if True this rect is in top-left of another_bbx ortherwise is in top-right
         '''
-        topLeft = min(self.pX, another_bbx.pX) == self.pX or min(self.pY, another_bbx.pY) == self.pY
+        topLeft = min(self.pX, another_bbx.pX) == self.pX
         self.is_topleft_occlusion = topLeft
         return topLeft
     def check_behind_of_otherbbx(self, another_bbx):
@@ -153,12 +155,30 @@ class BoundingBox:
         else:
             # if two y axis are slightly different, we need to add bbx area criterion
             result = self.area < another_bbx.area
-        self.is_under_of_occlusion = result
+        #self.is_under_of_occlusion = result
         return result;
-
+    def get_overlap_area(self, another_bbx):
+        '''
+            Description:
+                get the percentage of overlaping of this bbx to another_bbx
+            Params:
+                another_bbx: the another bbx that intersect with this bbx
+            Returns: number
+                percentage of overlap area / total area
+        '''
+        xx1 = np.maximum(self.pX, another_bbx.pX)
+        yy1 = np.maximum(self.pY, another_bbx.pY)
+        xx2 = np.minimum(self.pXmax, another_bbx.pXmax)
+        yy2 = np.minimum(self.pYmax, another_bbx.pYmax)
+        w = np.maximum(0., xx2 - xx1)
+        h = np.maximum(0., yy2 - yy1)
+        wh = w * h
+        self.overlap_percent = int(wh / (self.width * self.height) * 100)
+        return self.overlap_percent
 class MovingObject:
     def __init__(self, image, bounding_box:BoundingBox):
         self.bounding_box = bounding_box
+        self.img_full = image
         self.image = image[
                             self.bounding_box.pY:self.bounding_box.pY + self.bounding_box.height,
                             self.bounding_box.pX:self.bounding_box.pX + self.bounding_box.width
@@ -173,13 +193,23 @@ class MovingObject:
         self.bottomLeft = np.round(np.array([[x], [y + bounding_box.height]]))
         self.bottomRight = np.round(np.array([[x + bounding_box.width], [y + bounding_box.height]]))
 
+        self.predict_bbx = bounding_box
+        self.predict_image = image[
+                            self.bounding_box.pY:self.bounding_box.pY + self.bounding_box.height,
+                            self.bounding_box.pX:self.bounding_box.pX + self.bounding_box.width
+                        ]
+        self.predict_center = np.round(np.array([[x], [y + self.predict_bbx.height]]))
+        self.predict_topLeft = np.round(np.array([[x], [y]]))
+        self.predict_topRight = np.round(np.array([[x + self.predict_bbx.width], [y]]))
+        self.predict_bottomLeft = np.round(np.array([[x], [y + self.predict_bbx.height]]))
+        self.predict_bottomRight = np.round(np.array([[x + self.predict_bbx.width], [y + self.predict_bbx.height]]))
+        
         self.HU_feature = None  # hu invariants
         self.CH_feature = None  # color histogram
         self.SI_feature = None  # sift
         self.vector = None      # vector from moving object to the nearest point in FOV
         self.is_in_fov = False
         self.confidence = 0
-
     def set_label(self, label:str):
         '''
             Description:
@@ -190,7 +220,6 @@ class MovingObject:
         self.label = label
     def set_confidence(self, confidence):
         self.confidence = confidence
-
     def set_vector(self, nearest_point):
         '''
             Description:
@@ -199,7 +228,6 @@ class MovingObject:
                 nearest_point: the nearest point to moving object
         '''
         self.vector = (self.bounding_box.center.x - nearest_point.x, self.bounding_box.center.y - nearest_point.y)
-
     def get_feature(self):
         '''
             Description:
@@ -209,6 +237,39 @@ class MovingObject:
         self.CH_feature = feature_extractor.extract_color_histogram()
         self.HU_feature = feature_extractor.extract_hu_moment()
         self.SI_feature = feature_extractor.extract_sift_features()
+    def update_bbx(self):
+        old_bbx = copy.copy(self.bounding_box)
+        self.bounding_box = copy.copy(self.predict_bbx)
+        self.bounding_box.is_under_of_occlusion = old_bbx.is_under_of_occlusion;
+        self.bounding_box.is_topleft_occlusion = old_bbx.is_topleft_occlusion;
+        self.bounding_box.overlap_percent = old_bbx.overlap_percent;
+        self.image = copy.copy(self.predict_image)
+        self.center = copy.copy(self.predict_center)
+        self.topLeft = copy.copy(self.predict_topLeft)
+        self.topRight = copy.copy(self.predict_topRight)
+        self.bottomLeft = copy.copy(self.predict_bottomLeft)
+        self.bottomRight = copy.copy(self.predict_bottomRight)
+
+    def update_predict_bbx(self, px, py):
+        dx = 0
+        dy = 0
+        if px < 0:
+            dx = -px
+            px = 0
+        if py < 0:
+            dy = -py
+            py = 0
+        self.predict_bbx = BoundingBox(int(px), int(py), int(max(0,self.bounding_box.width - dx)), int(max(0,self.bounding_box.height - dy)))
+        self.predict_image = self.img_full[
+                            self.predict_bbx.pY:self.predict_bbx.pY + self.predict_bbx.height,
+                            self.predict_bbx.pX:self.predict_bbx.pX + self.predict_bbx.width
+                        ]
+        [x,y] = [self.predict_bbx.pX, self.predict_bbx.pY]
+        self.predict_center = np.round(np.array([[x], [y + self.predict_bbx.height]]))
+        self.predict_topLeft = np.round(np.array([[x], [y]]))
+        self.predict_topRight = np.round(np.array([[x + self.predict_bbx.width], [y]]))
+        self.predict_bottomLeft = np.round(np.array([[x], [y + self.predict_bbx.height]]))
+        self.predict_bottomRight = np.round(np.array([[x + self.predict_bbx.width], [y + self.predict_bbx.height]]))
 
     def compare_other(self, other_moving_obj):
         '''

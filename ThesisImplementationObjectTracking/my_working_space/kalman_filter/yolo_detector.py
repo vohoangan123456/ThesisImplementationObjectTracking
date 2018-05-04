@@ -20,6 +20,8 @@ class yolo_detector:
                 frame: the given frame
         '''
         self.frame_index += 1
+        if self.frame_index == 34:
+            x = 1
         cv2.putText(frame, str('frame: {0}'.format(self.frame_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         print('--------------------------------', str(self.frame_index), '-----------------------------')
         print('# detection')
@@ -31,15 +33,16 @@ class yolo_detector:
             if label == 'person':
                 tl = (result['topleft']['x'], result['topleft']['y'])
                 br = (result['bottomright']['x'], result['bottomright']['y'])                
-                if confidence >= 0.55:
+                if confidence >= 0.65:
                     bounding_box = BoundingBox(tl[0], tl[1], abs(tl[0] - br[0]), abs(tl[1] - br[1]))
                     moving_obj = MovingObject(frame, bounding_box)
                     moving_obj.set_confidence(confidence)
                     moving_obj.get_feature()
                     self.list_moving_obj.append(moving_obj);
                 print(str("%.2f" % confidence), str('({0},{1})'.format(tl[0], tl[1])))
-
         self.find_object_under_occlusion()
+        if len(self.list_moving_obj) == 2 and len(self.list_under_occlusion) != 0:
+            x = 12
         # Slower the FPS
         cv2.waitKey(50)
 
@@ -66,9 +69,11 @@ class yolo_detector:
         self.list_under_occlusion = []
         for i, obj1 in enumerate(self.list_moving_obj):
             for j, obj2 in enumerate(self.list_moving_obj):
-                if i != j and obj1.bounding_box.check_intersec_each_other(obj2) and obj1.bounding_box.check_behind_of_otherbbx(obj2):
+                if i != j and obj1.bounding_box.check_intersec_each_other(obj2.bounding_box) and obj1.bounding_box.check_behind_of_otherbbx(obj2.bounding_box) and obj1.bounding_box.is_under_of_occlusion is False:
                     # check if the obj1 is intersected with obj2 and it's under the obj2
-                    obj1.check_direction_of_intersec(obj2)
+                    obj1.bounding_box.is_under_of_occlusion = True
+                    obj1.bounding_box.check_direction_of_intersec(obj2.bounding_box)
+                    obj1.bounding_box.get_overlap_area(obj2.bounding_box)
                     self.list_under_occlusion.append(obj1)
         self.list_not_occlusion = set(self.list_moving_obj) - set(self.list_under_occlusion)
 
