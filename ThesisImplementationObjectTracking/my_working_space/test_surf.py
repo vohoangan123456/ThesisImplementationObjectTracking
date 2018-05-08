@@ -451,14 +451,14 @@ def save_video(videopath, outputPath):
         (ret, img1) = cam1.read()
         if img1 is None:
             break
-        if cv2.waitKey(18) == ord('e') or frame == 700:
+        if cv2.waitKey(1) == ord('e') or frame == 3400:
             save = True
         cv2.putText(img1, str('frame: {0}'.format(frame)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         cv2.imshow('cam1', img1)
         if save is True:
             out1.write(img1)
 
-        if cv2.waitKey(18) == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break
     cam1.release()
     out1.release()
@@ -505,18 +505,32 @@ def get_fov_polygon_from_image(imagePath):
         cv2.imshow('output', img)
         cv2.imshow('mask', mask)
         cv2.waitKey(18);
+
+def area(a, b):  # returns None if rectangles don't intersect
+    dx = min(a.xmax, b.xmax) - max(a.xmin, b.xmin)
+    dy = min(a.ymax, b.ymax) - max(a.ymin, b.ymin)
+    if (dx>=0) and (dy>=0):
+        return dx*dy
+def rectangleIntersection():
+    from collections import namedtuple
+    Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
+    # intersection here is (3, 3, 4, 3.5), or an area of 1*.5=.5
+    ra = Rectangle(3., 3., 5., 5.)
+    rb = Rectangle(4., 1., 6., 3.5)
+    print(area(ra, rb))
 #run_with_orb();
 #find_fov();
 #fov_handle();
 #draw_polygon();
 #run_with_sift();
 #run_two_camera()
-#crop_video('./videos/videofile_intown.avi', './videos/video2.avi')
+#crop_video('./videos/sample_video/campus7-c0.avi', './videos/campus7-c0.avi')
 #devide_video('./videos/video2.avi', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
 #play_multiple_video('./videos/campus4-c2.avi','./videos/outpy_5_devide_video2_video2.avi')
-#merge_two_video('./videos/outpy_5_devide_video2_video1.avi','./videos/outpy_5_devide_video2_video2.avi')
+#merge_two_video('./videos/outpy_29_campusc7_c0_edit.avi','./videos/outpy_29_campusc7_c1_edit.avi')
 #run_with_previous('./videos/outpy_7_videofile_intown.avi')
-#save_video('./videos/sample_video/campus7-c0.avi', './videos/sample_video/edit_campus7-c0.avi')
+save_video('./videos/sample_video/campusc7_c0_edit.avi', './videos/campusc7_c0_edit_1.avi')
 #crop_first_image('./videos/sample_video/campus4-c1.avi', './sample_img/cut_images/background_2.jpg')
 #merge_two_video('./videos/sample_video/campus7-c0.avi','./videos/sample_video/campus7-c1.avi')
-get_fov_polygon_from_image('./fov_computing/test1.png')
+#get_fov_polygon_from_image('./fov_computing/test1.png')
+#rectangleIntersection()

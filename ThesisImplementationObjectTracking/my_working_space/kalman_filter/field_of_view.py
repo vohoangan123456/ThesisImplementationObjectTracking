@@ -2,8 +2,9 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from my_working_space.kalman_filter.common import convert_homography_to_polygon
 from my_working_space.kalman_filter.moving_object import MovingObject
+from my_working_space.kalman_filter.line import Line
 import numpy as np
-
+import cv2
 class CommonFOV:
     def __init__(self):
         '''
@@ -12,6 +13,15 @@ class CommonFOV:
         '''
         self.list_point = []
         self.polygon = None
+        self.is_automatic = False   # flag check generate FOV automatic or handoff
+
+    def set_automatic_flag(self, flag):
+        self.is_automatic = flag
+    def draw_polygon(self, img):
+        boundary = self.polygon.boundary.xy
+        for index in range(0, len(boundary[0])-1):
+            cv2.line(img, (int(boundary[0][index]),int(boundary[1][index])), 
+                        (int(boundary[0][index + 1]), int(boundary[1][index + 1])), (0, 0, 0), 3)
 
     def check_point_inside_FOV(self, point):
         '''
@@ -43,7 +53,10 @@ class CommonFOV:
         top_right = Point(moving_obj.bounding_box.pX + moving_obj.bounding_box.width, moving_obj.bounding_box.pY)   
         
         # return true if any of vertex is inside FOV
-        return self.polygon.contains(top_left) or self.polygon.contains(bottom_left) or self.polygon.contains(bottom_right) or self.polygon.contains(top_right);
+        return_value = self.polygon.contains(top_left) or self.polygon.contains(bottom_left) or self.polygon.contains(bottom_right) or self.polygon.contains(top_right)
+        if return_value is True:
+            moving_obj.is_in_fov = True
+        return return_value
 
     def get_FOV_of_target_in_source(self, target_cam, source_cam):
         '''
@@ -82,10 +95,42 @@ class CommonFOV:
         M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
         matchesMask = mask.ravel().tolist()
 
-        h,w = target_cam.shape
+        h,w,_ = target_cam.shape
         pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
         dst = cv2.perspectiveTransform(pts,M)
 
         # create polygon from list points
         self.list_point = convert_homography_to_polygon(np.int32(dst))
+        self.polygon = Polygon(self.list_point)
+
+        # create polygon of camera
+        cam_polygon = Polygon([(0,0),(0, h), (w, h), (w, 0)])
+
+        # get the intersection between the fov and the camera
+        self.polygon = self.polygon.intersection(cam_polygon)
+
+    def get_nearest_point_from_given_point(self, point:Point):
+        '''
+            Description: 
+                get the nearest distance in the boundary of polygon from the given point
+            Params:
+                point: the given point
+            Returns:
+                the distance that closest with the given point
+        '''
+        nearest_distance = self.polygon.exterior.project(point)
+        nearest_point = self.polygon.exterior.interpolate(nearest_distance)
+        return nearest_point
+
+    def generate_fov_from_list_point(self, list_point):
+        self.list_point = list_point
+        if self.is_automatic == False:
+            list_first = [i[0] for i in list_point]
+            minX = min(list_first)
+            maxX = max(list_first)
+            self.list_point = [i for i in list_point if i[0] == minX or i[0] == maxX]  # just get 4 point of each vertex
+            self.AB = Line(self.list_point[0], self.list_point[1])
+            self.BC = Line(self.list_point[1], self.list_point[2])
+            self.CD = Line(self.list_point[2], self.list_point[3])
+            self.DA = Line(self.list_point[3], self.list_point[0])
         self.polygon = Polygon(self.list_point)
