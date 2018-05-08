@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 
 THRESHOLD_ACCEPT = 200
+THRESHOLD_INSIDE_OBJ = 20
 def convert_homography_to_polygon(homography_point):
     '''
         Description:
@@ -86,7 +87,7 @@ def get_most_familiar(target, list_object):
     min_diff = maxsize
     return_obj = None
     for obj in list_object:
-        diff = target.compare_other_without_vector(obj)
+        diff = target.compare_other(obj)
         if diff < min_diff:
             min_diff = diff
             return_obj = obj
@@ -132,3 +133,36 @@ def iou_compute(bb_test,bb_gt):
     o = wh / ((bb_test[2]-bb_test[0])*(bb_test[3]-bb_test[1])
     + (bb_gt[2]-bb_gt[0])*(bb_gt[3]-bb_gt[1]) - wh)
     return(o)
+
+def check_obj_disappear(bbx, img):
+    '''
+        Description:
+            check if an object is suddenly disappeared in image
+        Params:
+            bbx: the bounding box of that object
+            img: the image was cut from camera
+        Returns:
+            bool: if object suddenly disappear or it's out of camera
+    '''
+    bbx.pX
+    bbx.pY
+    bbx.pXmax
+    bbx.pYmax
+    w,h,_ = img.shape
+    if bbx.area > (THRESHOLD_ACCEPT * 2):
+        return True
+    else:
+        return False
+
+def make_pair_corresponse_edge_two_fov(fov1, fov2):
+    '''
+        Description:
+            create a mapping table which edge in fov2 is appropriated with edge in fov1
+        Params:
+            fov1: the fov 1
+            fov2: the fov 2
+        Returns: []
+            list of pair objects
+    '''
+    if fov1.is_automatic is False:
+        return [(fov1.AB, fov2.DA), (fov1.BC, fov2.AB), (fov1.CD, fov2.BC), (fov1.DA, fov2.CD)]

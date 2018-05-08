@@ -2,6 +2,7 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from my_working_space.kalman_filter.common import convert_homography_to_polygon
 from my_working_space.kalman_filter.moving_object import MovingObject
+from my_working_space.kalman_filter.line import Line
 import numpy as np
 import cv2
 class CommonFOV:
@@ -12,6 +13,10 @@ class CommonFOV:
         '''
         self.list_point = []
         self.polygon = None
+        self.is_automatic = False   # flag check generate FOV automatic or handoff
+
+    def set_automatic_flag(self, flag):
+        self.is_automatic = flag
     def draw_polygon(self, img):
         boundary = self.polygon.boundary.xy
         for index in range(0, len(boundary[0])-1):
@@ -119,4 +124,13 @@ class CommonFOV:
 
     def generate_fov_from_list_point(self, list_point):
         self.list_point = list_point
-        self.polygon = Polygon(list_point)
+        if self.is_automatic == False:
+            list_first = [i[0] for i in list_point]
+            minX = min(list_first)
+            maxX = max(list_first)
+            self.list_point = [i for i in list_point if i[0] == minX or i[0] == maxX]  # just get 4 point of each vertex
+            self.AB = Line(self.list_point[0], self.list_point[1])
+            self.BC = Line(self.list_point[1], self.list_point[2])
+            self.CD = Line(self.list_point[2], self.list_point[3])
+            self.DA = Line(self.list_point[3], self.list_point[0])
+        self.polygon = Polygon(self.list_point)

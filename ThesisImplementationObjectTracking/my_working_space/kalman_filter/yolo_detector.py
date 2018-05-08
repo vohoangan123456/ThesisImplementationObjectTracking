@@ -22,7 +22,7 @@ class yolo_detector:
         self.frame_index += 1
         if self.frame_index == 34:
             x = 1
-        cv2.putText(frame, str('frame: {0}'.format(self.frame_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+        cv2.putText(frame, str('frame: {0}'.format(self.frame_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         print('--------------------------------', str(self.frame_index), '-----------------------------')
         print('# detection')
         results = self.tfNet.return_predict(frame)
@@ -33,7 +33,7 @@ class yolo_detector:
             if label == 'person':
                 tl = (result['topleft']['x'], result['topleft']['y'])
                 br = (result['bottomright']['x'], result['bottomright']['y'])                
-                if confidence >= 0.65:
+                if confidence >= 0.59:
                     bounding_box = BoundingBox(tl[0], tl[1], abs(tl[0] - br[0]), abs(tl[1] - br[1]))
                     moving_obj = MovingObject(frame, bounding_box)
                     moving_obj.set_confidence(confidence)

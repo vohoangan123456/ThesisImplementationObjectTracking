@@ -73,11 +73,15 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="my_working_space\kalman_filter\kalman_filter.py" />
+    <Compile Include="my_working_space\kalman_filter\line.py" />
     <Compile Include="my_working_space\kalman_filter\moving_object.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="my_working_space\kalman_filter\multi_tracker.py" />
     <Compile Include="my_working_space\kalman_filter\object_tracking.py" />
+    <Compile Include="my_working_space\kalman_filter\sort_kalman.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="my_working_space\kalman_filter\tracker.py" />
     <Compile Include="my_working_space\kalman_filter\yolo_detector.py">
       <SubType>Code</SubType>

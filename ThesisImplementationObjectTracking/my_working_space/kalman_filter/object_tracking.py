@@ -14,9 +14,10 @@ import os
 from random import randint
 from my_working_space.kalman_filter.yolo_detector import yolo_detector
 from my_working_space.kalman_filter.tracker import Tracker
+from my_working_space.kalman_filter.common import make_pair_corresponse_edge_two_fov as make_pair
 #from my_working_space.kalman_filter.multi_tracker import MultiTracker, Tracker
 from darkflow.net.build import TFNet
-
+AUTO_FOV_COMPUTE = False
 def merge_two_video(video_path1, video_path2):
     import imageio
     imageio.plugins.ffmpeg.download()
@@ -187,7 +188,7 @@ def tracking_single_camera(videopath, options):
         # draw fov
         #tracker1.fov.draw_polygon(frame1)
         
-        tracker1.update_cam1(yolo_detectors1.list_moving_obj)         
+        tracker1.update_cam1_new_kalman(yolo_detectors1.list_moving_obj)         
         
         tracker1.update_single_camera(yolo_detectors1.list_moving_obj)
 
@@ -250,17 +251,20 @@ def multi_tracking_object(videopath1, videopath2, options):
     yolo_detectors2 = yolo_detector(tfNet)
 
     # Create Object Tracker
-    tracker1 = Tracker(4, 15, 5, 100, 1)
-    tracker2 = Tracker(4, 15, 5, 300, 2)
+    tracker1 = Tracker(0.35, 20, 5, 100, 1)
+    tracker2 = Tracker(0.35, 20, 5, 100, 2)
 
 
     firstFrame = True   # flag check we capture the first frame
-
+    frame_index = 0
     # Infinite loop to process video frames
     while(True):
         # Capture frame-by-frame
         ret1, frame1 = cam1.read()
         ret2, frame2 = cam2.read()
+        frame_index += 1
+        if frame_index < 1300:
+            continue
         if frame1 is None or frame2 is None:
             break
         frame1 = cv2.resize(frame1, (600,600))
@@ -271,10 +275,15 @@ def multi_tracking_object(videopath1, videopath2, options):
         orig_frame2 = copy.copy(frame2)
 
         if firstFrame is True:
-            tracker1.get_FOV(orig_frame2, orig_frame1, './fov_computing/cam2Incam1.png')
-            tracker2.get_FOV(orig_frame1, orig_frame2, './fov_computing/cam1Incam2.png')        
-            #tracker1.get_FOV(orig_frame2, orig_frame1)
-            #tracker2.get_FOV(orig_frame1, orig_frame2)
+            tracker1.fov.set_automatic_flag(AUTO_FOV_COMPUTE)
+            tracker2.fov.set_automatic_flag(AUTO_FOV_COMPUTE)
+            if AUTO_FOV_COMPUTE is False:
+                tracker1.get_FOV(orig_frame2, orig_frame1, './fov_computing/cam2Incam1.png')
+                tracker2.get_FOV(orig_frame1, orig_frame2, './fov_computing/cam1Incam2.png')
+                make_pair(tracker1.fov, tracker2.fov)
+            else:
+                tracker1.get_FOV(orig_frame2, orig_frame1)
+                tracker2.get_FOV(orig_frame1, orig_frame2)
 
         # Detect and return centeroids of the objects in the frame
         yolo_detectors1.detect(frame1)
@@ -300,10 +309,10 @@ def multi_tracking_object(videopath1, videopath2, options):
             tracker1.assign_label_consistent(tracker2)
             tracker2.set_trackIdCount(tracker1.trackIdCount)
         else:
-            tracker1.update_single_camera(yolo_detectors1.list_moving_obj)
+            tracker1.Update_un_assign_detect(yolo_detectors1.list_moving_obj, tracker2)
             tracker2.set_trackIdCount(tracker1.trackIdCount)
 
-            tracker2.update_single_camera(yolo_detectors2.list_moving_obj)
+            tracker2.Update_un_assign_detect(yolo_detectors2.list_moving_obj, tracker1)
             tracker1.set_trackIdCount(tracker2.trackIdCount)
         #MultiTracker.consistent_label(tracker1, tracker2)
 
@@ -318,14 +327,14 @@ def multi_tracking_object(videopath1, videopath2, options):
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
                 cv2.rectangle(frame1, tl, br, (0, 255, 0), 1)
                 cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame1, str('({0},{1})'.format(tl[0], tl[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-
-                #moving_obj_track = tracker1.tracks[i].moving_obj
-                #pX = moving_obj_track.bounding_box.pX
-                #pY = moving_obj_track.bounding_box.pY                
-                #cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), (int(pX), int(pY)), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
+                cv2.putText(frame1, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                 if moving_obj_track.is_in_fov is True:
-                    cv2.putText(frame1, 'in', (int(pX + 20), int(pY + 20)), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
+                    cv2.putText(frame1, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                if moving_obj_track.bounding_box.is_under_of_occlusion is True:
+                    position = 'b-r';
+                    if moving_obj_track.bounding_box.is_topleft_occlusion is True:
+                        position = 't-l'
+                    cv2.putText(frame1, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
         cv2.imshow('Tracking1', frame1)
         # cam2
         for i in range(len(tracker2.tracks)):
@@ -337,14 +346,14 @@ def multi_tracking_object(videopath1, videopath2, options):
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
                 cv2.rectangle(frame2, tl, br, (0, 255, 0), 1)
                 cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame2, str('({0},{1})'.format(tl[0], tl[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-
-                #moving_obj_track = tracker2.tracks[i].moving_obj
-                #pX = moving_obj_track.bounding_box.pX
-                #pY = moving_obj_track.bounding_box.pY
-                #cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), (int(pX), int(pY)), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
+                cv2.putText(frame2, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                 if moving_obj_track.is_in_fov is True:
-                    cv2.putText(frame2, 'in', (int(pX + 20), int(pY + 20)), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
+                    cv2.putText(frame2, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                if moving_obj_track.bounding_box.is_under_of_occlusion is True:
+                    position = 'b-r';
+                    if moving_obj_track.bounding_box.is_topleft_occlusion is True:
+                        position = 't-l'
+                    cv2.putText(frame2, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
         cv2.imshow('Tracking2', frame2)
         if firstFrame is True:
             firstFrame = False

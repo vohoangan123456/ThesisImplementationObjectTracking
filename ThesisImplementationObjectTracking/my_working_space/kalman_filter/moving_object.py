@@ -210,6 +210,16 @@ class MovingObject:
         self.vector = None      # vector from moving object to the nearest point in FOV
         self.is_in_fov = False
         self.confidence = 0
+        self.list_distance = [] # list the distance from this obj to the edge of common fov
+        self.exist_in = 0       # [0,1,2,3] <=> [not existed both, existed in cam1, existed in cam2, existed in both]
+    def set_existed_in(self, camId):
+        '''
+            Description:
+                set the flag to know where is this object existed
+            Params:
+                camId: the cameraId [1,2,3] <=> [cam1, cam2, both cam]
+        '''
+        self.exist_in += camId
     def set_label(self, label:str):
         '''
             Description:
@@ -249,7 +259,6 @@ class MovingObject:
         self.topRight = copy.copy(self.predict_topRight)
         self.bottomLeft = copy.copy(self.predict_bottomLeft)
         self.bottomRight = copy.copy(self.predict_bottomRight)
-
     def update_predict_bbx(self, px, py):
         dx = 0
         dy = 0
@@ -270,8 +279,41 @@ class MovingObject:
         self.predict_topRight = np.round(np.array([[x + self.predict_bbx.width], [y]]))
         self.predict_bottomLeft = np.round(np.array([[x], [y + self.predict_bbx.height]]))
         self.predict_bottomRight = np.round(np.array([[x + self.predict_bbx.width], [y + self.predict_bbx.height]]))
-
     def compare_other(self, other_moving_obj):
+        '''
+            Description:
+                compare this moving object with another moving object
+            Params:
+                other_moiving_obj: the other moving object that need to compute the different
+            Returns:
+                return the different between two moving object
+
+        '''
+        feature_matching = FeatureMatching()
+        diff = maxsize
+        if self.vector is not None and other_moving_obj.vector is not None:
+            # in the case fov is compute automatically
+            diff = pow(self.vector[0] - other_moving_obj.vector[0], 2) + pow(self.vector[1] - other_moving_obj.vector[1], 2)
+            diff += feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
+        else:
+            w,h,_ = self.img_full.shape
+            if self.exist_in == 1:
+                if self.bounding_box.pX < (w - self.bounding_box.pXmax):
+                    # object exist from the left side of camera 1 (edge BC)
+                    diff = other_moving_obj.list_distance[1]
+                else:
+                    # object exist from the right side of camera 1 (edge DA)
+                    diff = other_moving_obj.list_distance[3]
+            elif self.exist_in == 2:
+                if self.bounding_box.pX < (w - self.bounding_box.pXmax):
+                    # object exist from the left side of camera 1 (edge DA)
+                    diff = other_moving_obj.list_distance[3]
+                else:
+                    # object exist from the right side of camera 1 (edge BC)
+                    diff = other_moving_obj.list_distance[1]
+        return diff
+
+    def compare_other_without_vector(self, other_moving_obj):
         '''
             Description:
                 compare this moving object with another moving object
@@ -290,23 +332,6 @@ class MovingObject:
         if self.vector is not None and other_moving_obj.vector is not None:
             vector_diff = pow(self.vector[0] - other_moving_obj.vector[0], 2) + pow(self.vector[1] - other_moving_obj.vector[1], 2)
         return HU_diff * WEIGHTS[0] + CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2] + vector_diff * WEIGHTS[3]
-
-    def compare_other_without_vector(self, other_moving_obj):
-        '''
-            Description:
-                compare this moving object with another moving object
-            Params:
-                other_moiving_obj: the other moving object that need to compute the different
-            Returns:
-                return the different between two moving object
-
-        '''
-        feature_matching = FeatureMatching()
-        #HU_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[1])
-        #HU_diff = np.sum(HU_diff)
-        CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
-        #SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
-        return CH_diff * WEIGHTS[1]# + SI_diff * WEIGHTS[2]
     def compare_other_in_one_camera(self, other_moving_obj):
         '''
             Description:
@@ -323,4 +348,22 @@ class MovingObject:
         CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
         SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
         return CH_diff * WEIGHTS[1] + SI_diff * WEIGHTS[2]
+    def distance_to_fov_edge(self, fov):
+        '''
+            Description:
+                compute the distances from this object (bottom-left) to each edge of the fov
+            Params:
+                fov: commonFOV object
+            Return:
+        '''
+        if fov.is_automatic is False:
+            bl = (self.bounding_box.pX, self.bounding_box.pYmax)
+            distance1 = fov.AB.distance_from_point(bl)
+            distance2 = fov.BC.distance_from_point(bl)
+            distance3 = fov.CD.distance_from_point(bl)
+            distance4 = fov.DA.distance_from_point(bl)
+            self.list_distance.append(distance1)
+            self.list_distance.append(distance2)
+            self.list_distance.append(distance3)
+            self.list_distance.append(distance4)
 
