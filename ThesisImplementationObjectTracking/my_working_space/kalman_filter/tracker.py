@@ -101,7 +101,7 @@ class Tracker(object):
                     pass
 
         # Let's average the squared ERROR
-        cost = (0.5) * cost
+        #cost = (0.5) * cost
         # Using Hungarian Algorithm assign the correct detected measurements to predicted tracks
         assignment = []
         for _ in range(N):
@@ -187,6 +187,7 @@ class Tracker(object):
                 list_moving_obj[assignment[i]].set_label(self.tracks[i].track_id)
                 self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
             else:
+                self.tracks[i].KF.kf.P = np.zeros(self.tracks[i].KF.kf.P.shape)
                 if self.tracks[i].skipped_frames == 0:
                     # in the case the moving obj is under occlusion => predict by current state
                     if len(self.tracks[i].trace) > 0:
@@ -225,7 +226,19 @@ class Tracker(object):
             list_unassigned_obj = []
             for index in self.un_assigned_detects:
                 list_unassigned_obj.append(list_moving_obj[index])
-            list_pair, list_most_familiar = stable_matching(list_unassigned_obj, another_tracker.object_in_fov)
+            list_un_pair = [];
+            for another in another_tracker.object_in_fov:
+                isPair = False
+                for obj in self.object_in_fov:
+                    if obj.label == another.label:
+                        isPair = True
+                        break
+                if isPair == False:
+                    list_un_pair.append(another)
+
+
+            #list_pair, list_most_familiar = stable_matching(list_unassigned_obj, another_tracker.object_in_fov)
+            list_pair, list_most_familiar = stable_matching(list_unassigned_obj, list_un_pair)
 
         for i in range(len(self.un_assigned_detects)):
             # in the case that there are no object in another camera move to this camera
@@ -777,17 +790,18 @@ class Tracker(object):
                 list_moving_obj[assignment[i]].set_label(self.tracks[i].track_id)
                 self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
             else:
+                self.tracks[i].KF.kf.P = np.zeros(self.tracks[i].KF.kf.P.shape)
                 if self.tracks[i].skipped_frames == 0:
                     # in the case the moving obj is under occlusion => predict by current state
-                    if len(self.tracks[i].trace) > 0:
-                        new_bbx_predict = self.tracks[i].KF.get_state()
-                        old_bbx_predict = self.tracks[i].trace[-1]
-                        dx = new_bbx_predict.pX - old_bbx_predict.pX
-                        dy = new_bbx_predict.pY - old_bbx_predict.pY
-                        dx = int(dx/max(abs(dx), 1))
-                        dy = int(dy/max(abs(dy), 1))
-                        self.tracks[i].moving_obj.bounding_box.pX += dx
-                        self.tracks[i].moving_obj.bounding_box.pY += dy
+                    #if len(self.tracks[i].trace) > 0:
+                    #    new_bbx_predict = self.tracks[i].KF.get_state()
+                    #    old_bbx_predict = self.tracks[i].trace[-1]
+                    #    dx = new_bbx_predict.pX - old_bbx_predict.pX
+                    #    dy = new_bbx_predict.pY - old_bbx_predict.pY
+                    #    dx = int(dx/max(abs(dx), 1))
+                    #    dy = int(dy/max(abs(dy), 1))
+                    #    self.tracks[i].moving_obj.bounding_box.pX += dx
+                    #    self.tracks[i].moving_obj.bounding_box.pY += dy
                     self.tracks[i].KF.update(self.tracks[i].moving_obj.bounding_box)
                 else:
                     self.tracks[i].KF.update(self.tracks[i].moving_obj.bounding_box)

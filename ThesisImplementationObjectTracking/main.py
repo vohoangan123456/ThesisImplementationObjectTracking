@@ -14,9 +14,23 @@ options = {
 #}
 
 threshold = 20
-video_path1 = './videos/sample_video/campusc7_c0_edit_1.avi'
-video_path2 = './videos/sample_video/campusc7_c1_edit_1.avi'
+#video_path1 = './videos/sample_video/edit_1_campus4-c0.avi'
+#video_path2 = './videos/sample_video/edit_1_campus4-c1.avi'
+#detection_path1 = './videos/detections/detection_edit_1_campus4-c0_code4_cam1.txt'
+#detection_path2 = './videos/detections/detection_edit_1_campus4-c1_code4_cam2.txt'
+
+video_path1 = './videos/sample_video/campusc7_c0_edit.avi'
+video_path2 = './videos/sample_video/campusc7_c1_edit.avi'
+detection_path1 = './videos/detections/detection_campusc7_c0_edit_code40_cam1.txt'
+detection_path2 = './videos/detections/detection_campusc7_c1_edit_code40_cam2.txt'
 
 #obj_tracker.tracking_object(video_path1, video_path2, options)
 #obj_tracker.tracking_single_camera('./videos/video2_1.avi', options)
-obj_tracker.multi_tracking_object(video_path1, video_path2, options)
+#obj_tracker.multi_tracking_object(video_path1, video_path2, options)
+
+#obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
+#video_path1 = './videos/sample_video/campusc7_c0_edit.avi'
+#video_path2 = './videos/sample_video/campusc7_c1_edit.avi'
+#obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
+
+obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
