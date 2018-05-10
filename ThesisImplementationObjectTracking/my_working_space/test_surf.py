@@ -518,6 +518,24 @@ def rectangleIntersection():
     ra = Rectangle(3., 3., 5., 5.)
     rb = Rectangle(4., 1., 6., 3.5)
     print(area(ra, rb))
+
+def read_txt_file(fileName):
+    file = open(fileName, "r")
+    #lines = file.readlines()
+    #print(lines)
+    for line in file:
+        line = line[:-1].split(', ')
+        frame_index = line[0]
+        confidence = line[1]
+        tl = (line[2], line[3])
+        br = (line[4], line[5])
+        result = {
+            "frame": frame_index,
+            "confidence": confidence,
+            "topleft": tl,
+            "bottomright": br
+            }
+        print(result)
 #run_with_orb();
 #find_fov();
 #fov_handle();
@@ -529,8 +547,9 @@ def rectangleIntersection():
 #play_multiple_video('./videos/campus4-c2.avi','./videos/outpy_5_devide_video2_video2.avi')
 #merge_two_video('./videos/outpy_29_campusc7_c0_edit.avi','./videos/outpy_29_campusc7_c1_edit.avi')
 #run_with_previous('./videos/outpy_7_videofile_intown.avi')
-save_video('./videos/sample_video/campusc7_c0_edit.avi', './videos/campusc7_c0_edit_1.avi')
+#save_video('./videos/sample_video/campusc7_c0_edit.avi', './videos/campusc7_c0_edit_1.avi')
 #crop_first_image('./videos/sample_video/campus4-c1.avi', './sample_img/cut_images/background_2.jpg')
 #merge_two_video('./videos/sample_video/campus7-c0.avi','./videos/sample_video/campus7-c1.avi')
 #get_fov_polygon_from_image('./fov_computing/test1.png')
 #rectangleIntersection()
+read_txt_file("./videos/detection_code4_cam1.txt")

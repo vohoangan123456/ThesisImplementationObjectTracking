@@ -111,6 +111,7 @@ class KalmanBoxTracker(object):
     self.history = []
     self.hits += 1
     self.hit_streak += 1
+    #self.kf.P = np.zeros(self.kf.P.shape)
     self.kf.update(convert_bbox_to_z(bbox))
 
   def predict(self):
