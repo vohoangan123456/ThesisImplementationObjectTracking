@@ -149,7 +149,7 @@ def check_obj_disappear(bbx, img):
     bbx.pXmax
     bbx.pYmax
     w,h,_ = img.shape
-    if bbx.area > (THRESHOLD_ACCEPT * 2):
+    if bbx.area > (THRESHOLD_ACCEPT * 2) and bbx.pX > THRESHOLD_INSIDE_OBJ and bbx.pY > THRESHOLD_INSIDE_OBJ and bbx.pXmax < (w - THRESHOLD_INSIDE_OBJ) and bbx.pYmax < (h - THRESHOLD_INSIDE_OBJ):
         return True
     else:
         return False

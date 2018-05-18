@@ -262,3 +262,4 @@ __pycache__/
 *.avi
 *.mp4
 .vs/ThesisImplementationObjectTracking/v15/.suo
+*.MOV

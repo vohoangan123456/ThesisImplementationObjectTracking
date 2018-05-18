@@ -154,10 +154,10 @@ def draw_polygon(polygon:Polygon, img):
 def fov_handle():
     from shapely import wkt
     utils = Utils()
-    file_path = './sample_img/'
-    img1 = cv2.imread(file_path + 'cam1_intown.jpg', 0)
+    file_path = './fov_computing/mydataset/'
+    img1 = cv2.imread(file_path + 'cam1_left_1.jpg', 0)
     img1 = imutils.resize(img1, width=500)
-    img2 = cv2.imread(file_path + 'cam2_intown.jpg', 0)
+    img2 = cv2.imread(file_path + 'cam1_right_1.jpg', 0)
     img2 = imutils.resize(img2, width=500)
 
     #img1 = crop_img_process(img1)
@@ -441,24 +441,32 @@ def run_with_previous(videopath):
 
 def save_video(videopath, outputPath):
     frame = 0;
+    cut_index = 0;
     cam1 = cv2.VideoCapture(videopath)
+    cam1.set(cv2.CAP_PROP_FPS, 60)
     frame_width = int(cam1.get(3))
     frame_height = int(cam1.get(4))
-    out1 = cv2.VideoWriter(outputPath,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    out1 = cv2.VideoWriter('./videos/my_video/cam1_left_part_{0}.avi'.format(1),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
     save = False
+    camIndex = 1
     while True:
         frame += 1
         (ret, img1) = cam1.read()
         if img1 is None:
             break
-        if cv2.waitKey(1) == ord('e') or frame == 3400:
-            save = True
-        cv2.putText(img1, str('frame: {0}'.format(frame)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        if cv2.waitKey(int((1/int(60)) * 1000)) == ord('e') or frame == 1393:
+            if save == False:
+                frame = 1
+                save = True
+        cv2.putText(img1, str('frame: {0}'.format(cut_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         cv2.imshow('cam1', img1)
         if save is True:
+            cut_index += 1
             out1.write(img1)
-
-        if cv2.waitKey(1) == ord('q'):
+        if frame >= 3500 and frame % 3500 == 0:
+            out1.release()
+            out1 = cv2.VideoWriter('./videos/my_video/cam1_left_part_{0}.avi'.format(int(frame/3500 + 1)),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+        if cv2.waitKey(int((1/int(60)) * 1000)) == ord('q'):
             break
     cam1.release()
     out1.release()
@@ -544,12 +552,12 @@ def read_txt_file(fileName):
 #run_two_camera()
 #crop_video('./videos/sample_video/campus7-c0.avi', './videos/campus7-c0.avi')
 #devide_video('./videos/video2.avi', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
-#play_multiple_video('./videos/campus4-c2.avi','./videos/outpy_5_devide_video2_video2.avi')
+#play_multiple_video('./videos/my_video/cam1_left_part_1.avi','./videos/my_video/cam1Right/cam1_right_part_1.avi')
 #merge_two_video('./videos/outpy_29_campusc7_c0_edit.avi','./videos/outpy_29_campusc7_c1_edit.avi')
 #run_with_previous('./videos/outpy_7_videofile_intown.avi')
-#save_video('./videos/sample_video/campusc7_c0_edit.avi', './videos/campusc7_c0_edit_1.avi')
+save_video('./videos/my_video/cam1_right.MOV', './videos/my_video/cam1_left_part_1.avi')
 #crop_first_image('./videos/sample_video/campus4-c1.avi', './sample_img/cut_images/background_2.jpg')
 #merge_two_video('./videos/sample_video/campus7-c0.avi','./videos/sample_video/campus7-c1.avi')
 #get_fov_polygon_from_image('./fov_computing/test1.png')
 #rectangleIntersection()
-read_txt_file("./videos/detection_code4_cam1.txt")
+#read_txt_file("./videos/detection_code4_cam1.txt")
