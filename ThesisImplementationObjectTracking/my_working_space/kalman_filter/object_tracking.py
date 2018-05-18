@@ -17,7 +17,7 @@ from my_working_space.kalman_filter.tracker import Tracker
 from my_working_space.kalman_filter.common import make_pair_corresponse_edge_two_fov as make_pair
 #from my_working_space.kalman_filter.multi_tracker import MultiTracker, Tracker
 from darkflow.net.build import TFNet
-AUTO_FOV_COMPUTE = False
+AUTO_FOV_COMPUTE = True
 def merge_two_video(video_path1, video_path2):
     import imageio
     imageio.plugins.ffmpeg.download()
@@ -251,8 +251,8 @@ def multi_tracking_object(videopath1, videopath2, options):
     yolo_detectors2 = yolo_detector(tfNet)
 
     # Create Object Tracker
-    tracker1 = Tracker(0.85, 20, 5, 100, 1)
-    tracker2 = Tracker(0.85, 20, 5, 100, 2)
+    tracker1 = Tracker(0.85, 30, 5, 100, 1)
+    tracker2 = Tracker(0.85, 30, 5, 100, 2)
 
 
     firstFrame = True   # flag check we capture the first frame
@@ -401,8 +401,8 @@ def multi_tracking_object_write(videopath1, videopath2, options):
         frame_index += 1
         if frame1 is None or frame2 is None:
             break
-        frame1 = cv2.resize(frame1, (600,600))
-        frame2 = cv2.resize(frame2, (600,600))
+        #frame1 = cv2.resize(frame1, (720,600))
+        #frame2 = cv2.resize(frame2, (600,600))
 
         # Detect and return centeroids of the objects in the frame
         yolo_detectors1.detect(frame1)
@@ -426,7 +426,7 @@ def multi_tracking_object_write(videopath1, videopath2, options):
     cv2.destroyAllWindows()
 
 def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetector2, options):
-    rd_number = randint(0, 100) # random number for save video
+    rd_number = randint(0, 1000) # random number for save video
 
     # init darkflow network
     #tfNet = TFNet(options) 
@@ -434,8 +434,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
     # Create opencv video capture object
     cam1 = cv2.VideoCapture(videopath1)
     cam2 = cv2.VideoCapture(videopath2)
-
-    frame_width, frame_height = 600,600
+    frame_width = int(cam1.get(3)) 
+    frame_height = int(cam1.get(4))
     file_path1 = './videos/outpy_{0}_{1}'.format(str(rd_number), os.path.basename(videopath1))
     file_path2 = './videos/outpy_{0}_{1}'.format(str(rd_number), os.path.basename(videopath2))
     # create write video
@@ -447,8 +447,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
     yolo_detectors2 = detection_read(filedetector2)
 
     # Create Object Tracker
-    tracker1 = Tracker(0.85, 20, 5, 100, 1)
-    tracker2 = Tracker(0.85, 20, 5, 100, 2)
+    tracker1 = Tracker(120, 20, 5, 100, 1)
+    tracker2 = Tracker(120, 20, 5, 100, 2)
 
 
     firstFrame = True   # flag check we capture the first frame
@@ -461,8 +461,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
         frame_index += 1
         if frame1 is None or frame2 is None:
             break
-        frame1 = cv2.resize(frame1, (600,600))
-        frame2 = cv2.resize(frame2, (600,600))
+        #frame1 = cv2.resize(frame1, (600,600))
+        #frame2 = cv2.resize(frame2, (600,600))
 
         # Make copy of original frame
         orig_frame1 = copy.copy(frame1)
@@ -482,7 +482,7 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
         # Detect and return centeroids of the objects in the frame
         yolo_detectors1.detect(frame1)
         yolo_detectors2.detect(frame2)
-        #if frame_index < 2240:
+        #if frame_index < 3680:
         #    continue
         # draw fov
         tracker1.fov.draw_polygon(frame1)
@@ -521,8 +521,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
                 tl = (int(pX), int(pY))
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
                 cv2.rectangle(frame1, tl, br, (0, 255, 0), 1)
-                cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame1, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 255, 255), 1)
+                cv2.putText(frame1, str('({0},{1})-{2}'.format(tl[0], br[1], moving_obj_track.bounding_box.area)), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                 if moving_obj_track.is_in_fov is True:
                     cv2.putText(frame1, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                 if moving_obj_track.bounding_box.is_under_of_occlusion is True:
@@ -540,8 +540,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
                 tl = (int(pX), int(pY))
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
                 cv2.rectangle(frame2, tl, br, (0, 255, 0), 1)
-                cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame2, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 255, 255), 1)
+                cv2.putText(frame2, str('({0},{1})-{2}'.format(tl[0], br[1], moving_obj_track.bounding_box.area)), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                 if moving_obj_track.is_in_fov is True:
                     cv2.putText(frame2, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                 if moving_obj_track.bounding_box.is_under_of_occlusion is True:
@@ -561,10 +561,10 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
         cv2.imshow('Original2', orig_frame2)
 
         # Slower the FPS
-        cv2.waitKey(18)
+        cv2.waitKey(1)
 
         # Check for key strokes
-        k = cv2.waitKey(18) & 0xff
+        k = cv2.waitKey(1) & 0xff
         if k == 27:  # 'esc' key has been pressed, exit program.
             break    
     # When everything done, release the capture

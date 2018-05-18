@@ -272,13 +272,14 @@ def crop_video(video_path, out_path):
         (ret, img1) = cam1.read()
         if img1 is None:
             break
-        if cv2.waitKey(18) == ord('e'):
+        key = cv2.waitKey(1)
+        if key == ord('e'):
             save = True
         cv2.imshow('cam1', img1)
         if save is True:
             out.write(img1)
 
-        if cv2.waitKey(18) == ord('q'):
+        if key == ord('q'):
             break
     cam1.release()
     out.release()
@@ -288,12 +289,14 @@ def devide_video(video_path, out_path1, out_path2):
     one_part = int(cam1.get(3) / 3)
     frame_width = one_part * 2 
     frame_height = int(cam1.get(4))
-    out1 = cv2.VideoWriter(out_path1,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
-    out2 = cv2.VideoWriter(out_path2,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    out1 = cv2.VideoWriter('./videos/my_video/cam1_left_video1_part_{0}.avi'.format(5),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    out2 = cv2.VideoWriter('./videos/my_video/cam1_left_video2_part_{0}.avi'.format(5),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
     save = False
+    cut_index = 0
+    devideIndex = 1
     while True:
         (ret, img1) = cam1.read()
-        if img1 is None:
+        if img1 is None or cut_index == 6000:
             break
         output_img1 = img1[
                             0:frame_height,
@@ -304,17 +307,26 @@ def devide_video(video_path, out_path1, out_path2):
                             one_part: one_part + frame_width
                         ]
         
-        
-        if cv2.waitKey(18) == ord('e'):
+        key = cv2.waitKey(1)
+        if key == ord('e'):
             save = True
+        elif key == ord('r'):
+            save = False
+        elif key == ord('q'):
+            break
+        elif key == ord('n'):
+            devideIndex += 1
+            cut_index = 0
+            out1 = cv2.VideoWriter('./videos/my_video/cam1_left_video1_part_{0}.avi'.format(devideIndex),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+            out2 = cv2.VideoWriter('./videos/my_video/cam1_left_video2_part_{0}.avi'.format(devideIndex),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+        cv2.putText(output_img1, str('frame: {0}'.format(cut_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
         cv2.imshow('cam1', output_img1)
+        cv2.putText(output_img2, str('frame: {0}'.format(cut_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
         cv2.imshow('cam2', output_img2)
         if save is True:
+            cut_index += 1
             out1.write(output_img1)
             out2.write(output_img2)
-
-        if cv2.waitKey(18) == ord('q'):
-            break
     cam1.release()
     out1.release()
     out2.release()
@@ -441,23 +453,47 @@ def run_with_previous(videopath):
 
 def save_video(videopath, outputPath):
     frame = 0;
+    cut_index = 0;
     cam1 = cv2.VideoCapture(videopath)
+    cam2 = cv2.VideoCapture('./videos/my_video/cam2_2.mp4')
+    cam3 = cv2.VideoCapture('./videos/my_video/cam2_3.mp4')
+    cam4 = cv2.VideoCapture('./videos/my_video/cam2_4.mp4')
+    cam5 = cv2.VideoCapture('./videos/my_video/cam2_5.mp4')
     frame_width = int(cam1.get(3))
     frame_height = int(cam1.get(4))
-    out1 = cv2.VideoWriter(outputPath,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    out1 = cv2.VideoWriter('./videos/my_video/cam1_left_part_{0}.avi'.format(1),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
     save = False
+    camIndex = 1
     while True:
         frame += 1
         (ret, img1) = cam1.read()
         if img1 is None:
             break
-        if cv2.waitKey(1) == ord('e') or frame == 3400:
+            if camIndex == 1:
+                cam1 = cam2
+            elif camIndex == 2:
+                break
+                cam1 = cam3
+            elif camIndex == 3:
+                cam1 = cam4
+            elif camIndex ==4:
+                cam1 = cam5
+            elif camIndex == 5:
+                break
+            camIndex += 1
+            (ret, img1) = cam1.read()
+        if cv2.waitKey(1) == ord('e') or frame == 607:
+            if save == False:
+                frame = 1
             save = True
-        cv2.putText(img1, str('frame: {0}'.format(frame)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        cv2.putText(img1, str('frame: {0}'.format(cut_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         cv2.imshow('cam1', img1)
         if save is True:
+            cut_index += 1
             out1.write(img1)
-
+        if frame >= 3500 and frame % 3500 == 0:
+            out1.release()
+            out1 = cv2.VideoWriter('./videos/my_video/cam1_left_part_{0}.avi'.format(int(frame/3500 + 1)),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
         if cv2.waitKey(1) == ord('q'):
             break
     cam1.release()
@@ -542,14 +578,14 @@ def read_txt_file(fileName):
 #draw_polygon();
 #run_with_sift();
 #run_two_camera()
-#crop_video('./videos/sample_video/campus7-c0.avi', './videos/campus7-c0.avi')
-#devide_video('./videos/video2.avi', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
+#crop_video('./videos/my_video/cam2_1.mp4', './videos/my_video/cam2_1_crop_part_1.avi')
+devide_video('./videos/my_video/cam1_left.MOV', './videos/my_video/cam1_right_video1.avi', './videos/my_video/cam1_right_video2.avi')
 #play_multiple_video('./videos/campus4-c2.avi','./videos/outpy_5_devide_video2_video2.avi')
-#merge_two_video('./videos/outpy_29_campusc7_c0_edit.avi','./videos/outpy_29_campusc7_c1_edit.avi')
+#merge_two_video('./videos/outpy_93_cam1_right_video1_part_3.avi','./videos/outpy_93_cam1_right_video2_part_3.avi')
 #run_with_previous('./videos/outpy_7_videofile_intown.avi')
-#save_video('./videos/sample_video/campusc7_c0_edit.avi', './videos/campusc7_c0_edit_1.avi')
+#save_video('./videos/my_video/cam1_left.MOV', './videos/my_video/cam1_left_part_1.avi')
 #crop_first_image('./videos/sample_video/campus4-c1.avi', './sample_img/cut_images/background_2.jpg')
-#merge_two_video('./videos/sample_video/campus7-c0.avi','./videos/sample_video/campus7-c1.avi')
+#merge_two_video('./videos/my_video/cam1_left.MOV','./videos/my_video/cam1_right.MOV')
 #get_fov_polygon_from_image('./fov_computing/test1.png')
 #rectangleIntersection()
-read_txt_file("./videos/detection_code4_cam1.txt")
+#read_txt_file("./videos/detection_code4_cam1.txt")

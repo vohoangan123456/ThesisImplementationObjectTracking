@@ -3,7 +3,8 @@ import numpy as np
 from my_working_space.kalman_filter.moving_object import MovingObject, BoundingBox
 from my_working_space.kalman_filter.field_of_view import CommonFOV
 from random import randint
-
+THRESHOLD_CONFIDENCE = 0.5
+THRESHOLD_SIZE = 4000
 class yolo_detector:
     def __init__(self, tfNet):
         self.tfNet = tfNet
@@ -147,6 +148,8 @@ class detection_read:
                 frame: the given frame
         '''
         self.frame_index += 1
+        #if self.frame_index <= 3680:
+        #    return
         cv2.putText(frame, str('frame: {0}'.format(self.frame_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         print('--------------------------------', str(self.frame_index), '-----------------------------')
         print('# detection')
@@ -156,8 +159,8 @@ class detection_read:
             confidence = result['confidence']
             tl = result['topleft']
             br = result['bottomright']
-            if confidence >= 0.59:
-                bounding_box = BoundingBox(tl[0], tl[1], abs(tl[0] - br[0]), abs(tl[1] - br[1]))
+            bounding_box = BoundingBox(tl[0], tl[1], abs(tl[0] - br[0]), abs(tl[1] - br[1]))
+            if confidence >= THRESHOLD_CONFIDENCE and bounding_box.area > THRESHOLD_SIZE:
                 moving_obj = MovingObject(frame, bounding_box)
                 moving_obj.set_confidence(confidence)
                 moving_obj.get_feature()
@@ -165,7 +168,7 @@ class detection_read:
             print(str("%.2f" % confidence), str('({0},{1})'.format(tl[0], tl[1])))
         self.find_object_under_occlusion()
         # Slower the FPS
-        cv2.waitKey(18)
+        cv2.waitKey(1)
 
     def convert_to_detection(self):
         '''

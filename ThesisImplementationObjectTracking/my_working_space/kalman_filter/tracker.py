@@ -18,7 +18,8 @@ from my_working_space.kalman_filter.common import stable_matching, get_fov_from_
 from my_working_space.kalman_filter.sort_kalman import KalmanBoxTracker
 
 THRESHOLD = 160
-WEIGHT = [1,1]  # [diff_distance, diff_feature]
+WEIGHT = [100,1]  # [diff_distance, diff_feature]
+THRESHOLD_SIZE_CHANGE = 1.5 #150%
 
 #class Track(object):
 #    def __init__(self, trackIdCount, moving_obj):
@@ -94,9 +95,11 @@ class Tracker(object):
                     bb_test = [previousObj.topLeft[0][0], previousObj.topLeft[1][0], previousObj.bottomRight[0][0], previousObj.bottomRight[1][0]]
                     bb_gt = [list_moving_obj[j].topLeft[0][0], list_moving_obj[j].topLeft[1][0], list_moving_obj[j].bottomRight[0][0], list_moving_obj[j].bottomRight[1][0]]
                     iou = iou_compute(bb_test, bb_gt)
-                    distance = 1 - iou
+                    iouDiff = 1 - iou
 
-                    cost[i][j] = WEIGHT[0] * distance
+                    diff = previousObj.bottomLeft - list_moving_obj[j].bottomLeft
+                    distances = np.sqrt(diff[0][0]*diff[0][0] + diff[1][0]*diff[1][0])
+                    cost[i][j] = WEIGHT[0] * iouDiff + WEIGHT[1] * distances
                 except:
                     pass
 
@@ -185,6 +188,17 @@ class Tracker(object):
                 self.tracks[i].under_occlusion_frame = 0
                 self.tracks[i].KF.update(list_moving_obj[assignment[i]].bounding_box)
                 list_moving_obj[assignment[i]].set_label(self.tracks[i].track_id)
+                totalWidth = 0
+                totalHeight = 0
+                m_obj = list_moving_obj[assignment[i]]
+                for bbx_trace in self.tracks[i].trace:
+                    totalWidth += bbx_trace.width
+                    totalHeight += bbx_trace.height
+                totalWidth = totalWidth / max(len(self.tracks[i].trace), 1)
+                totalHeight = totalHeight / max(len(self.tracks[i].trace), 1)
+                if totalHeight * totalWidth > m_obj.bounding_box.height * m_obj.bounding_box.width * THRESHOLD_SIZE_CHANGE:
+                    m_obj.bounding_box.width = totalWidth
+                    m_obj.bounding_box.height = totalHeight
                 self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
             else:
                 self.tracks[i].KF.kf.P = np.zeros(self.tracks[i].KF.kf.P.shape)
