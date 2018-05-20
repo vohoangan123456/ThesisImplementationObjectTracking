@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>1f7edb5c-a6ee-4a84-a954-03bcb22e1be1</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>my_working_space\test_surf.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -62,8 +62,52 @@
     <Compile Include="darkflow\__init__.py" />
     <Compile Include="image_processing.py" />
     <Compile Include="main.py" />
+    <Compile Include="my_implementations\common\bounding_box.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\common.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\features.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\FOV.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\global_config.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\kalman_filter.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\line.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\moving_object.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\common\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\main_process.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\object_detection\detectors.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\object_detection\__init__.py" />
+    <Compile Include="my_implementations\object_tracking\tracker.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\object_tracking\__init__.py" />
+    <Compile Include="my_implementations\utils\utils.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="my_implementations\utils\__init__.py" />
+    <Compile Include="my_implementations\__init__.py" />
     <Compile Include="my_working_space\get_points.py" />
     <Compile Include="my_working_space\KalmanFilter.py" />
+    <Compile Include="my_working_space\kalman_filter\common.py" />
     <Compile Include="my_working_space\kalman_filter\detectors.py" />
     <Compile Include="my_working_space\kalman_filter\field_of_view.py">
       <SubType>Code</SubType>
@@ -126,9 +170,14 @@
     <Folder Include="darkflow\utils\" />
     <Folder Include="darkflow\utils\__pycache__\" />
     <Folder Include="darkflow\__pycache__\" />
+    <Folder Include="my_implementations\common\" />
+    <Folder Include="my_implementations\utils\" />
+    <Folder Include="my_implementations\object_tracking\" />
+    <Folder Include="my_implementations\object_detection\" />
     <Folder Include="my_working_space\" />
     <Folder Include="my_working_space\kalman_filter\" />
     <Folder Include="my_working_space\stuffs\" />
+    <Folder Include="my_implementations\" />
     <Folder Include="sample_img\cut_images\" />
     <Folder Include="videos\" />
     <Folder Include="sample_img\" />

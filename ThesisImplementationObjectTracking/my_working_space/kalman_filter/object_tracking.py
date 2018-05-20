@@ -17,7 +17,7 @@ from my_working_space.kalman_filter.tracker import Tracker
 from my_working_space.kalman_filter.common import make_pair_corresponse_edge_two_fov as make_pair
 #from my_working_space.kalman_filter.multi_tracker import MultiTracker, Tracker
 from darkflow.net.build import TFNet
-AUTO_FOV_COMPUTE = False
+AUTO_FOV_COMPUTE = True
 def merge_two_video(video_path1, video_path2):
     import imageio
     imageio.plugins.ffmpeg.download()
@@ -401,8 +401,8 @@ def multi_tracking_object_write(videopath1, videopath2, options):
         frame_index += 1
         if frame1 is None or frame2 is None:
             break
-        frame1 = cv2.resize(frame1, (600,600))
-        frame2 = cv2.resize(frame2, (600,600))
+        #frame1 = cv2.resize(frame1, (600,600))
+        #frame2 = cv2.resize(frame2, (600,600))
 
         # Detect and return centeroids of the objects in the frame
         yolo_detectors1.detect(frame1)
@@ -435,7 +435,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
     cam1 = cv2.VideoCapture(videopath1)
     cam2 = cv2.VideoCapture(videopath2)
 
-    frame_width, frame_height = 600,600
+    frame_width = int(cam1.get(3))
+    frame_height = int(cam1.get(4))
     file_path1 = './videos/outpy_{0}_{1}'.format(str(rd_number), os.path.basename(videopath1))
     file_path2 = './videos/outpy_{0}_{1}'.format(str(rd_number), os.path.basename(videopath2))
     # create write video
@@ -461,8 +462,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
         frame_index += 1
         if frame1 is None or frame2 is None:
             break
-        frame1 = cv2.resize(frame1, (600,600))
-        frame2 = cv2.resize(frame2, (600,600))
+        #frame1 = cv2.resize(frame1, (600,600))
+        #frame2 = cv2.resize(frame2, (600,600))
 
         # Make copy of original frame
         orig_frame1 = copy.copy(frame1)
