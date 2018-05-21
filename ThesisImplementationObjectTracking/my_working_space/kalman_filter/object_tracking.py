@@ -22,7 +22,7 @@ def merge_two_video(video_path1, video_path2):
     import imageio
     imageio.plugins.ffmpeg.download()
     from moviepy.editor import VideoFileClip, clips_array
-    rd_number = randint(0, 100) # random number for save video
+    rd_number = randint(0, 1000) # random number for save video
     clip1 = VideoFileClip(video_path1)
     clip2 = VideoFileClip(video_path2)
     #final_clip = concatenate_videoclips([clip1,clip2])
@@ -447,8 +447,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
     yolo_detectors2 = detection_read(filedetector2)
 
     # Create Object Tracker
-    tracker1 = Tracker(120, 20, 5, 100, 1)
-    tracker2 = Tracker(120, 20, 5, 100, 2)
+    tracker1 = Tracker(110, 40, 5, 100, 1)
+    tracker2 = Tracker(110, 40, 5, 100, 2)
 
 
     firstFrame = True   # flag check we capture the first frame

@@ -96,10 +96,10 @@ class Tracker(object):
                     bb_gt = [list_moving_obj[j].topLeft[0][0], list_moving_obj[j].topLeft[1][0], list_moving_obj[j].bottomRight[0][0], list_moving_obj[j].bottomRight[1][0]]
                     iou = iou_compute(bb_test, bb_gt)
                     iouDiff = 1 - iou
-
-                    diff = previousObj.bottomLeft - list_moving_obj[j].bottomLeft
-                    distances = np.sqrt(diff[0][0]*diff[0][0] + diff[1][0]*diff[1][0])
-                    cost[i][j] = WEIGHT[0] * iouDiff + WEIGHT[1] * distances
+                    
+                    pre_bbx = self.tracks[i].KF.get_state()
+                    distances = np.sqrt((pre_bbx.pX - list_moving_obj[j].bounding_box.pX)**2 + (pre_bbx.pYmax - list_moving_obj[j].bounding_box.pYmax)**2)
+                    cost[i][j] = WEIGHT[0] * distance + WEIGHT[1] * distances
                 except:
                     pass
 
@@ -121,13 +121,15 @@ class Tracker(object):
                 print('id: {0}; cost: {1}'.format(self.tracks[i].track_id, cost[i][assignment[i]]))
                 # check for cost distance threshold.
                 # If cost is very high then un_assign (delete) the track
-                if (cost[i][assignment[i]] > self.dist_thresh):
+                if (cost[i][assignment[i]] < self.dist_thresh) or (cost[i][assignment[i]] < (self.dist_thresh + 30) and self.tracks[i].moving_obj.bounding_box.is_under_of_occlusion):
+                    pass
+                else:
                     assignment[i] = -1
                     un_assigned_tracks.append(i)
-                pass
+
             else:
                 move_obj = self.tracks[i].moving_obj
-                if len(self.tracks[i].trace) > 2 and (move_obj.bounding_box.is_under_of_occlusion):
+                if len(self.tracks[i].trace) > 2 and (move_obj.bounding_box.is_under_of_occlusion or check_obj_disappear(move_obj.bounding_box, move_obj.img_full)):
                     # if the previous frame obj is under occlusion => update moving obj by predict value
                     move_obj.update_bbx()
                     self.tracks[i].under_occlusion_frame += 1
