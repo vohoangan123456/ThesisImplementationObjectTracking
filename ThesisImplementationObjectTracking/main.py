@@ -73,8 +73,8 @@ def read(options):
 
     #video_path1 = './videos/my_video/cam1_left_video1_part_2.avi'
     #video_path2 = './videos/my_video/cam1_left_video2_part_2.avi'
-    #detection_path1 = './videos/detections/detection_code15_cam1.txt'
-    #detection_path2 = './videos/detections/detection_code15_cam2.txt'
+    #detection_path1 = './videos/detections/detection_cam1_left_video1_part_2_cam1.txt'
+    #detection_path2 = './videos/detections/detection_cam1_left_video2_part_2_cam2.txt'
     #obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
 
     #video_path1 = './videos/my_video/cam1_left_video1_part_3.avi'
@@ -133,30 +133,33 @@ def read(options):
     obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
 
 def write(options):
-    #video_path1 = './videos/my_video/cam1_left_video1_part_1.avi'
-    #video_path2 = './videos/my_video/cam1_left_video2_part_1.avi'
-    #obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
-
-    video_path1 = './videos/my_video/cam1_left_video1_part_2.avi'
-    video_path2 = './videos/my_video/cam1_left_video2_part_2.avi'
+    video_path1 = './videos/my_video/cam1_right_part_1.avi'
+    video_path2 = './videos/my_video/cam2_right_part_1.avi'
     obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
 
-    #video_path1 = './videos/my_video/cam1_left_video1_part_3.avi'
-    #video_path2 = './videos/my_video/cam1_left_video2_part_3.avi'
-    #obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
+    video_path1 = './videos/my_video/cam1_right_part_2.avi'
+    video_path2 = './videos/my_video/cam2_right_part_2.avi'
+    obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
 
-    #video_path1 = './videos/my_video/cam1_left_video1_part_4.avi'
-    #video_path2 = './videos/my_video/cam1_left_video2_part_4.avi'
-    #obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
+    video_path1 = './videos/my_video/cam1_right_part_3.avi'
+    video_path2 = './videos/my_video/cam2_right_part_3.avi'
+    obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
 
-    #video_path1 = './videos/my_video/cam1_left_video1_part_5.avi'
-    #video_path2 = './videos/my_video/cam1_left_video2_part_5.avi'
-    #obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
+    video_path1 = './videos/my_video/cam1_right_part_4.avi'
+    video_path2 = './videos/my_video/cam2_right_part_4.avi'
+    obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
 
-    #video_path1 = './videos/sample_video/campusc7_c0_edit.avi'
-    #video_path2 = './videos/sample_video/campusc7_c1_edit.avi'
-    #obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
-    x = 1
+    video_path1 = './videos/my_video/cam1_right_part_5.avi'
+    video_path2 = './videos/my_video/cam2_right_part_5.avi'
+    obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
+
+    video_path1 = './videos/my_video/cam1_right_part_6.avi'
+    video_path2 = './videos/my_video/cam2_right_part_6.avi'
+    obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
+
+    video_path1 = './videos/sample_video/campusc7_c0_edit.avi'
+    video_path2 = './videos/sample_video/campusc7_c1_edit.avi'
+    obj_tracker.multi_tracking_object_write(video_path1, video_path2, options)
 
 def live(options):
     obj_tracker.tracking_object(video_path1, video_path2, options)

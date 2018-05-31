@@ -285,12 +285,16 @@ def crop_video(video_path, out_path):
     cv2.destroyAllWindows()
 def devide_video(video_path, out_path1, out_path2):
     cam1 = cv2.VideoCapture(video_path)
-    one_part = int(cam1.get(3) / 3)
-    frame_width = one_part * 2 
-    frame_height = int(cam1.get(4))
-    out1 = cv2.VideoWriter(out_path1,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
-    out2 = cv2.VideoWriter(out_path2,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
     save = False
+    frame_index = 0
+    save_index = 1
+    video_part = 1
+    one_part = int(cam1.get(3) / 3)
+    video_width = int(cam1.get(3))
+    frame_width = 960 #one_part * 2 
+    frame_height = 720 #int(cam1.get(4))
+    out1 = cv2.VideoWriter('./videos/my_video/cam1_right_part_{0}.avi'.format(video_part),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+    out2 = cv2.VideoWriter('./videos/my_video/cam2_right_part_{0}.avi'.format(video_part),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
     while True:
         (ret, img1) = cam1.read()
         if img1 is None:
@@ -301,20 +305,31 @@ def devide_video(video_path, out_path1, out_path2):
                         ]
         output_img2 = img1[
                             0:frame_height,
-                            one_part: one_part + frame_width
+                            (video_width - 960): video_width
                         ]
-        
-        
-        if cv2.waitKey(18) == ord('e'):
+        key = cv2.waitKey(1)
+        if key == ord('e'):
             save = True
+        elif key == ord('r'):
+            save = False
+        elif key == ord('n'):
+            save = False
+            video_part += 1
+            save_index = 1
+            out1.release()
+            out2.release()
+            out1 = cv2.VideoWriter('./videos/my_video/cam1_right_part_{0}.avi'.format(video_part),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+            out2 = cv2.VideoWriter('./videos/my_video/cam2_right_part_{0}.avi'.format(video_part),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
+        elif key == ord('q'):
+            break
+        cv2.putText(output_img1, str('frame: {0}'.format(save_index)), (15,15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         cv2.imshow('cam1', output_img1)
+        cv2.putText(output_img2, str('frame: {0}'.format(save_index)), (15,15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         cv2.imshow('cam2', output_img2)
         if save is True:
+            save_index += 1
             out1.write(output_img1)
             out2.write(output_img2)
-
-        if cv2.waitKey(18) == ord('q'):
-            break
     cam1.release()
     out1.release()
     out2.release()
@@ -361,49 +376,6 @@ def merge_two_video(video_path1, video_path2):
     final_clip = clips_array([[clip1, clip2]])
     final_clip.resize(width=1200).write_videofile("./videos/merge_file_width_campusc4_{0}.mp4".format(str(rd_number)))
     print('done')
-
-    #rd_number = randint(0, 100) # random number for save video
-    #cam1 = cv2.VideoCapture(video_path1)
-    #cam2 = cv2.VideoCapture(video_path2)
-    #frame_width = int(cam1.get(3)) + int(cam2.get(3))
-    #frame_height = int(cam1.get(4))
-    #out1 = cv2.VideoWriter('./videos/merge_{0}'.format(str(rd_number)),cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width,frame_height))
-    #while True:
-    #    (ret, img1) = cam1.read()
-    #    (ret, img2) = cam2.read()
-    #    img1 = cv2.resize(img1, (600,600))
-    #    img2 = cv2.resize(img2, (600,600))
-    #    # merge two images
-    #    result = Image.new("RGB", (1200, 600))
-    #    files = [img1, img2]
-    #    for index, img in enumerate(files):
-    #        path = os.path.expanduser('./sample_img/cam1.jpg')
-    #        img = Image.open(path)
-    #        img.thumbnail((400, 400), Image.ANTIALIAS)
-    #        x = index // 2 * 400
-    #        y = index % 2 * 400
-    #        w, h = img.size
-    #        result.paste(img, (x, y, x + w, y + h))
-    #    #total_width = 1200
-    #    #max_height = 600
-    #    #new_im = Image.new('RGB', (total_width, max_height))
-    #    #new_im.paste(img1,(0,0,600,600))
-    #    #new_im.paste(img1, (0, 0, 600, 600))
-    #    #new_im.paste(img2, (600,0, 1200, 600))
-    #    # end merge
-
-    #    cv2.imshow('cam1', img1)
-    #    cv2.imshow('cam2', img2)
-    #    cv2.imshow('merge', new_im)
-    #    out1.write(new_im)
-    #    key = cv2.waitKey(time)
-
-    #    if key == 27:
-    #        break
-    #cam1.release()
-    #cam2.release()
-    #out1.release()
-    #cv2.destroyAllWindows()
 
 def stable(rankings, A, B):
     partners = dict((a, (rankings[(a, 1)], 1)) for a in A)
@@ -551,8 +523,8 @@ def read_txt_file(fileName):
 #run_with_sift();
 #run_two_camera()
 #crop_video('./videos/sample_video/campus7-c0.avi', './videos/campus7-c0.avi')
-#devide_video('./videos/video2.avi', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
-play_multiple_video('./videos/my_video/cam1_right_video1_part_1.avi','./videos/my_video/cam1_right_video2_part_1.avi')
+devide_video('./videos/my_video/cam1_right.MOV', './videos/devide_video2_video1.avi', './videos/devide_video2_video2.avi')
+#play_multiple_video('./videos/my_video/cam1_right_video1_part_1.avi','./videos/my_video/cam1_right_video2_part_1.avi')
 #merge_two_video('./videos/outpy_29_campusc7_c0_edit.avi','./videos/outpy_29_campusc7_c1_edit.avi')
 #run_with_previous('./videos/outpy_7_videofile_intown.avi')
 #save_video('./videos/my_video/cam1_right.MOV', './videos/my_video/cam1_left_part_1.avi')

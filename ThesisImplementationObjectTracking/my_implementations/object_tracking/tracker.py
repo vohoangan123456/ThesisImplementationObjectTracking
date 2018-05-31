@@ -88,7 +88,7 @@ class Tracker(object):
                     distances = np.sqrt((pre_bbx.pX - list_moving_obj[j].bounding_box.pX)**2 + (pre_bbx.pYmax - list_moving_obj[j].bounding_box.pYmax)**2)
 
                     diff_feature = self.tracks[i].moving_obj.compare_features(list_moving_obj[j])
-                    cost[i][j] = (WEIGHT[0] * distance + WEIGHT[1] * distances) * WEIGHTS[3] + diff_feature
+                    cost[i][j] = (WEIGHT[0] * distance + WEIGHT[1] * distances) * WEIGHTS[3] + diff_feature * WEIGHTS[4]
                     print('cost obj:', cost[i][j])
                 except:
                     pass
@@ -118,8 +118,9 @@ class Tracker(object):
                     un_assigned_tracks.append(i)
             else:
                 move_obj = self.tracks[i].moving_obj
-                if len(self.tracks[i].trace) > 2 and (move_obj.bounding_box.is_under_of_occlusion or check_obj_disappear(move_obj.bounding_box, move_obj.img_full)):
-                    print('id: {0}; is-disappear: {1}'.format(self.tracks[i].track_id, str(check_obj_disappear(move_obj.bounding_box, move_obj.img_full))))
+                self.tracks[i].moving_obj.bounding_box.is_disappear = check_obj_disappear(move_obj.bounding_box, move_obj.img_full)
+                if len(self.tracks[i].trace) > 2 and (move_obj.bounding_box.is_under_of_occlusion or move_obj.bounding_box.is_disappear):
+                    print('id: {0}; is-disappear: {1}'.format(self.tracks[i].track_id, str(move_obj.bounding_box.is_disappear)))
                     # if the previous frame obj is under occlusion => update moving obj by predict value
                     move_obj.update_bbx()
                     self.tracks[i].under_occlusion_frame += 1

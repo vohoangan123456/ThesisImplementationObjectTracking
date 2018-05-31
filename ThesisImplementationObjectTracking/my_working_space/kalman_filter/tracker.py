@@ -19,6 +19,7 @@ from my_working_space.kalman_filter.sort_kalman import KalmanBoxTracker
 
 THRESHOLD = 160
 WEIGHT = [100,1]  # [diff_distance, diff_feature]
+THRESHOLD_SIZE_CHANGE = 1.5 #150%
 
 #class Track(object):
 #    def __init__(self, trackIdCount, moving_obj):
@@ -94,11 +95,10 @@ class Tracker(object):
                     bb_test = [previousObj.topLeft[0][0], previousObj.topLeft[1][0], previousObj.bottomRight[0][0], previousObj.bottomRight[1][0]]
                     bb_gt = [list_moving_obj[j].topLeft[0][0], list_moving_obj[j].topLeft[1][0], list_moving_obj[j].bottomRight[0][0], list_moving_obj[j].bottomRight[1][0]]
                     iou = iou_compute(bb_test, bb_gt)
-                    distance = 1 - iou
-
+                    iouDiff = 1 - iou
+                    
                     pre_bbx = self.tracks[i].KF.get_state()
                     distances = np.sqrt((pre_bbx.pX - list_moving_obj[j].bounding_box.pX)**2 + (pre_bbx.pYmax - list_moving_obj[j].bounding_box.pYmax)**2)
-
                     cost[i][j] = WEIGHT[0] * distance + WEIGHT[1] * distances
                 except:
                     pass
@@ -126,6 +126,7 @@ class Tracker(object):
                 else:
                     assignment[i] = -1
                     un_assigned_tracks.append(i)
+
             else:
                 move_obj = self.tracks[i].moving_obj
                 if len(self.tracks[i].trace) > 2 and (move_obj.bounding_box.is_under_of_occlusion or check_obj_disappear(move_obj.bounding_box, move_obj.img_full)):
@@ -189,6 +190,17 @@ class Tracker(object):
                 self.tracks[i].under_occlusion_frame = 0
                 self.tracks[i].KF.update(list_moving_obj[assignment[i]].bounding_box)
                 list_moving_obj[assignment[i]].set_label(self.tracks[i].track_id)
+                totalWidth = 0
+                totalHeight = 0
+                m_obj = list_moving_obj[assignment[i]]
+                for bbx_trace in self.tracks[i].trace:
+                    totalWidth += bbx_trace.width
+                    totalHeight += bbx_trace.height
+                totalWidth = totalWidth / max(len(self.tracks[i].trace), 1)
+                totalHeight = totalHeight / max(len(self.tracks[i].trace), 1)
+                if totalHeight * totalWidth > m_obj.bounding_box.height * m_obj.bounding_box.width * THRESHOLD_SIZE_CHANGE:
+                    m_obj.bounding_box.width = totalWidth
+                    m_obj.bounding_box.height = totalHeight
                 self.tracks[i].moving_obj = list_moving_obj[assignment[i]]
             else:
                 self.tracks[i].KF.kf.P = np.zeros(self.tracks[i].KF.kf.P.shape)
