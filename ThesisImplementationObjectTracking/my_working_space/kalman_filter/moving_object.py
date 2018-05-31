@@ -296,7 +296,7 @@ class MovingObject:
             diff = pow(self.vector[0] - other_moving_obj.vector[0], 2) + pow(self.vector[1] - other_moving_obj.vector[1], 2)
             diff += feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
         else:
-            w,h,_ = self.img_full.shape
+            h,w,_ = self.img_full.shape
             if self.exist_in == 1:
                 if self.bounding_box.pX < (w - self.bounding_box.pXmax):
                     # object exist from the left side of camera 1 (edge BC)

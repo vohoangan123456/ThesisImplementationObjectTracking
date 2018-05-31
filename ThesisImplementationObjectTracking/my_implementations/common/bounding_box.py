@@ -29,6 +29,7 @@ class BoundingBox:
         self.area = width * height
         self.is_under_of_occlusion = False  # flag check this bbx is under of another bbx
         self.is_topleft_occlusion = None    # flag check this bbx is under of another bbx and position is in topleft with another bbx
+        self.is_disappear = False           # flag check this bbx is disappear (when the detector error)
         self.overlap_percent = 0            # percentage of overlapping
 
     def check_intersec_each_other(self, another_bbx):

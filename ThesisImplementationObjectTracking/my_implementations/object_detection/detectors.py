@@ -163,8 +163,10 @@ class yolo_detector_read:
                 frame: the given frame
         '''
         self.frame_index += 1
-        cv2.putText(frame, str('frame: {0}'.format(self.frame_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+        #cv2.putText(frame, str('frame: {0}'.format(self.frame_index)), (10,10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         print('--------------------------------', str(self.frame_index), '-----------------------------')
+        if self.frame_index == 1636:
+            mn = 1
         print('# detection')
         results = [item for item in self.list_detection if item["frame"] == self.frame_index]
         self.list_moving_obj = []
