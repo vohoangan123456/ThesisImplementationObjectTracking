@@ -178,6 +178,25 @@ class MovingObject:
                     diff = other_moving_obj.list_distance[1]
         return diff
 
+    def compare_features(self, other_moving_obj):
+        '''
+            Description:
+                compare this moving object with another moving object
+            Params:
+                other_moiving_obj: the other moving object that need to compute the different
+            Returns:
+                return the different between two moving object
+
+        '''
+        result = 0;
+        if AUTO_FOV_COMPUTE is True:
+            feature_matching = FeatureMatching()
+            HU_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[1])
+            HU_diff = np.sum(HU_diff)
+            CH_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[2])
+            SI_diff = feature_matching.compare_object(self, other_moving_obj, LIST_FEATURE_EXTRACTION[3])
+            result = HU_diff * WEIGHTS[0] + WEIGHTS[1]/CH_diff + SI_diff * WEIGHTS[2]
+        return result
     def distance_to_fov_edge(self, fov):
         '''
             Description:

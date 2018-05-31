@@ -108,16 +108,16 @@ def multi_tracking_object(videopath1, videopath2, options):
                 pY = moving_obj_track.bounding_box.pY
                 tl = (int(pX), int(pY))
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
-                cv2.rectangle(frame1, tl, br, (0, 255, 0), 1)
-                cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame1, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.rectangle(frame1, tl, br, (0, 0, 0), 1)
+                cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 0), 1)
+                cv2.putText(frame1, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.is_in_fov is True:
-                    cv2.putText(frame1, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame1, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.bounding_box.is_under_of_occlusion is True:
                     position = 'b-r';
                     if moving_obj_track.bounding_box.is_topleft_occlusion is True:
                         position = 't-l'
-                    cv2.putText(frame1, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame1, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         cv2.imshow('Tracking1', frame1)
         # cam2
         for i in range(len(tracker2.tracks)):
@@ -127,16 +127,16 @@ def multi_tracking_object(videopath1, videopath2, options):
                 pY = moving_obj_track.bounding_box.pY
                 tl = (int(pX), int(pY))
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
-                cv2.rectangle(frame2, tl, br, (0, 255, 0), 1)
-                cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 1)
-                cv2.putText(frame2, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.rectangle(frame2, tl, br, (0, 0, 0), 1)
+                cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 0), 1)
+                cv2.putText(frame2, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.is_in_fov is True:
-                    cv2.putText(frame2, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame2, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.bounding_box.is_under_of_occlusion is True:
                     position = 'b-r';
                     if moving_obj_track.bounding_box.is_topleft_occlusion is True:
                         position = 't-l'
-                    cv2.putText(frame2, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame2, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         cv2.imshow('Tracking2', frame2)
         if firstFrame is True:
             firstFrame = False
@@ -230,8 +230,8 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
     yolo_detectors2 = yolo_detector_read(filedetector2)
 
     # Create Object Tracker
-    tracker1 = Tracker(110, 40, 5, 100, 1)
-    tracker2 = Tracker(110, 40, 5, 100, 2)
+    tracker1 = Tracker(180, 40, 5, 100, 1)
+    tracker2 = Tracker(180, 40, 5, 100, 2)
 
 
     firstFrame = True   # flag check we capture the first frame
@@ -293,16 +293,16 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
                 pY = moving_obj_track.bounding_box.pY
                 tl = (int(pX), int(pY))
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
-                cv2.rectangle(frame1, tl, br, (0, 255, 0), 1)
-                cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 255, 255), 1)
-                cv2.putText(frame1, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.rectangle(frame1, tl, br, (0, 0, 0), 1)
+                cv2.putText(frame1, str(tracker1.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 0), 1)
+                cv2.putText(frame1, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.is_in_fov is True:
-                    cv2.putText(frame1, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame1, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.bounding_box.is_under_of_occlusion is True:
                     position = 'b-r';
                     if moving_obj_track.bounding_box.is_topleft_occlusion is True:
                         position = 't-l'
-                    cv2.putText(frame1, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame1, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         cv2.imshow('Tracking1', frame1)
         # cam2
         for i in range(len(tracker2.tracks)):
@@ -312,16 +312,16 @@ def multi_tracking_object_read(videopath1, videopath2, filedetector1, filedetect
                 pY = moving_obj_track.bounding_box.pY
                 tl = (int(pX), int(pY))
                 br = (int(pX + moving_obj_track.bounding_box.width), int(pY + moving_obj_track.bounding_box.height))
-                cv2.rectangle(frame2, tl, br, (0, 255, 0), 1)
-                cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 255, 255), 1)
-                cv2.putText(frame2, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.rectangle(frame2, tl, br, (0, 0, 0), 1)
+                cv2.putText(frame2, str(tracker2.tracks[i].track_id % 100), tl, cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 0), 1)
+                cv2.putText(frame2, str('({0},{1})'.format(tl[0], br[1])), (tl[0], br[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.is_in_fov is True:
-                    cv2.putText(frame2, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame2, 'in', (tl[0] + 10, tl[1] + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 if moving_obj_track.bounding_box.is_under_of_occlusion is True:
                     position = 'b-r';
                     if moving_obj_track.bounding_box.is_topleft_occlusion is True:
                         position = 't-l'
-                    cv2.putText(frame2, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(frame2, '{0}:{1}'.format(position, str(moving_obj_track.bounding_box.overlap_percent)), (tl[0] + 10, tl[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         cv2.imshow('Tracking2', frame2)
         if firstFrame is True:
             firstFrame = False

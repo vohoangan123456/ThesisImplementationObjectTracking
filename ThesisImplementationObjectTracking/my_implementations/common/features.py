@@ -6,6 +6,7 @@
     Python Version    : 3.6
 '''
 import cv2
+import numpy as np
 from my_implementations.common.global_config import *
 
 class FeatureExtractor:
