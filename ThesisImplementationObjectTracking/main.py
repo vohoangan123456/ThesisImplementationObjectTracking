@@ -96,23 +96,23 @@ def read(options):
     #obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
 
     # new version
-    video_path1 = './videos/my_video/cam1_right_part_1.avi'
-    video_path2 = './videos/my_video/cam2_right_part_1.avi'
-    detection_path1 = './videos/detections/new_verson_parallel/detection_cam1_right_part_1_cam1.txt'
-    detection_path2 = './videos/detections/new_verson_parallel/detection_cam2_right_part_1_cam2.txt'
-    obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
+    #video_path1 = './videos/my_video/cam1_right_part_1.avi'
+    #video_path2 = './videos/my_video/cam2_right_part_1.avi'
+    #detection_path1 = './videos/detections/new_verson_parallel/detection_cam1_right_part_1_cam1.txt'
+    #detection_path2 = './videos/detections/new_verson_parallel/detection_cam2_right_part_1_cam2.txt'
+    #obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
 
-    video_path1 = './videos/my_video/cam1_right_part_2.avi'
-    video_path2 = './videos/my_video/cam2_right_part_2.avi'
-    detection_path1 = './videos/detections/new_verson_parallel/detection_cam1_right_part_2_cam1.txt'
-    detection_path2 = './videos/detections/new_verson_parallel/detection_cam2_right_part_2_cam2.txt'
-    obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
+    #video_path1 = './videos/my_video/cam1_right_part_2.avi'
+    #video_path2 = './videos/my_video/cam2_right_part_2.avi'
+    #detection_path1 = './videos/detections/new_verson_parallel/detection_cam1_right_part_2_cam1.txt'
+    #detection_path2 = './videos/detections/new_verson_parallel/detection_cam2_right_part_2_cam2.txt'
+    #obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
 
-    video_path1 = './videos/my_video/cam1_right_part_3.avi'
-    video_path2 = './videos/my_video/cam2_right_part_3.avi'
-    detection_path1 = './videos/detections/new_verson_parallel/detection_cam1_right_part_3_cam1.txt'
-    detection_path2 = './videos/detections/new_verson_parallel/detection_cam2_right_part_3_cam2.txt'
-    obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
+    #video_path1 = './videos/my_video/cam1_right_part_3.avi'
+    #video_path2 = './videos/my_video/cam2_right_part_3.avi'
+    #detection_path1 = './videos/detections/new_verson_parallel/detection_cam1_right_part_3_cam1.txt'
+    #detection_path2 = './videos/detections/new_verson_parallel/detection_cam2_right_part_3_cam2.txt'
+    #obj_tracker.multi_tracking_object_read(video_path1, video_path2, detection_path1, detection_path2, options)
 
     video_path1 = './videos/my_video/cam1_right_part_4.avi'
     video_path2 = './videos/my_video/cam2_right_part_4.avi'
